@@ -1,14 +1,107 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KOKO - Your Work Todo</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+    <div id="app" class="app-container">
+        <!-- Loading Overlay -->
+        <div id="loading" class="overlay">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+
+        <!-- Assigner View (Default) -->
+        <section id="assigner-view" class="view hidden">
+            <header class="header">
+                <div class="logo">
+                    <i data-lucide="zap" class="icon-brand"></i>
+                    <h1>KOKO</h1>
+                </div>
+                <p class="subtitle">할 일을 정해주고 링크를 보내세요.</p>
+            </header>
+
+            <main class="content">
+                <div class="card create-card">
+                    <div class="input-group">
+                        <label for="task-title">할 일</label>
+                        <input type="text" id="task-title" placeholder="무엇을 시킬까요?">
+                    </div>
+                    <div class="input-group">
+                        <label for="assignee-name">받는 사람</label>
+                        <input type="text" id="assignee-name" placeholder="누구에게 시킬까요?">
+                    </div>
+                    <button id="create-task-btn" class="btn btn-primary">
+                        <i data-lucide="link"></i> 링크 생성 및 복사
+                    </button>
+                </div>
+
+                <div class="task-section">
+                    <h2>내가지킨 일들</h2>
+                    <div id="task-list" class="task-list">
+                        <!-- Tasks will be injected here -->
+                        <div class="empty-state">
+                            <i data-lucide="clipboard-list"></i>
+                            <p>아직 등록된 할 일이 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </section>
+
+        <!-- Performer View (When ?taskId= is present) -->
+        <section id="performer-view" class="view hidden">
+            <div class="performer-container">
+                <header class="header text-center">
+                    <div class="logo justify-center">
+                        <i data-lucide="check-circle" class="icon-brand"></i>
+                        <h1>KOKO</h1>
+                    </div>
+                </header>
+
+                <div class="card performer-card">
+                    <div class="status-badge" id="performer-status">진행 중</div>
+                    <h2 id="display-assignee-name">안녕하세요!</h2>
+                    <p class="task-instruction" id="display-task-title">할 일이 도착했습니다.</p>
+                    
+                    <div id="completion-view" class="hidden text-center">
+                        <div class="success-icon">
+                            <i data-lucide="party-popper"></i>
+                        </div>
+                        <h3>수고하셨습니다!</h3>
+                        <p>완료 메시지를 시킨 사람에게 보냈습니다.</p>
+                    </div>
+
+                    <button id="complete-task-btn" class="btn btn-success btn-large">
+                        <i data-lucide="check"></i> 완료했습니다!
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast">링크가 복사되었습니다!</div>
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+        }
+      }
+    </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

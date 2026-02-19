@@ -1,1 +1,230 @@
-/* Add styles here */
+:root {
+  --primary: oklch(0.65 0.25 260);
+  --success: oklch(0.65 0.25 150);
+  --bg: oklch(0.98 0.01 260);
+  --text: oklch(0.2 0.02 260);
+  --white: oklch(1 0 0);
+  --card-bg: oklch(1 0 0 / 0.8);
+  --shadow: 0 10px 30px oklch(0 0 0 / 0.05);
+  --radius: 20px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(at 0% 0%, oklch(0.9 0.1 260 / 0.2) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, oklch(0.9 0.1 150 / 0.2) 0px, transparent 50%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* Texture effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: url('https://www.transparenttextures.com/patterns/cubes.png');
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+  z-index: 10;
+}
+
+.view {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hidden { display: none !important; }
+
+/* Header */
+.header { margin-bottom: 30px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.5rem; color: var(--primary); }
+.justify-center { justify-content: center; }
+.text-center { text-align: center; }
+.subtitle { opacity: 0.6; margin-top: 5px; font-size: 0.9rem; }
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid oklch(1 0 0 / 0.5);
+  border-radius: var(--radius);
+  padding: 25px;
+  box-shadow: var(--shadow);
+  margin-bottom: 25px;
+}
+
+.input-group { margin-bottom: 20px; }
+.input-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; opacity: 0.8; }
+.input-group input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid oklch(0.9 0.01 260);
+  background: oklch(0.99 0.005 260);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+.input-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px oklch(0.65 0.25 260 / 0.1);
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 15px oklch(0.65 0.25 260 / 0.3);
+}
+.btn-primary:hover {
+  background: oklch(0.6 0.25 260);
+  box-shadow: 0 6px 20px oklch(0.65 0.25 260 / 0.4);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+  box-shadow: 0 4px 15px oklch(0.65 0.25 150 / 0.3);
+}
+
+.btn-large { padding: 20px; font-size: 1.1rem; }
+
+/* Task List */
+.task-section h2 { font-size: 1.1rem; margin-bottom: 15px; font-weight: 700; opacity: 0.9; }
+.task-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  margin-bottom: 12px;
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid oklch(0.95 0.01 260);
+  transition: all 0.2s;
+}
+.task-card:hover { transform: translateX(5px); border-color: var(--primary); }
+
+.task-info h4 { font-size: 1rem; font-weight: 700; }
+.task-info p { font-size: 0.8rem; opacity: 0.5; }
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.badge-pending { background: oklch(0.95 0.01 260); color: oklch(0.4 0.01 260); }
+.badge-done { background: oklch(0.9 0.1 150); color: oklch(0.4 0.1 150); }
+
+/* Performer Specific */
+.performer-card { text-align: center; }
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: oklch(0.65 0.25 260 / 0.1);
+  color: var(--primary);
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+.task-instruction { font-size: 1.4rem; font-weight: 400; margin: 15px 0 30px; line-height: 1.4; }
+
+.success-icon {
+  font-size: 4rem;
+  color: var(--success);
+  margin-bottom: 20px;
+  animation: bounce 1s infinite alternate;
+}
+@keyframes bounce {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: oklch(0.2 0.02 260);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px oklch(0 0 0 / 0.2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Overlay & Spinner */
+.overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  gap: 15px;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid oklch(0.9 0.01 260);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+  .app-container { padding: 15px; }
+  .card { padding: 20px; }
+}
