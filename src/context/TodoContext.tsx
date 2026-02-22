@@ -1,0 +1,380 @@
+"use client";
+
+import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import type { Todo, TodoStatus } from "@/types/todo";
+import { generateId } from "@/lib/utils";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
+import {
+    collection,
+    doc,
+    onSnapshot,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    writeBatch,
+    deleteField
+} from "firebase/firestore";
+
+interface TodoContextType {
+    todos: Todo[];
+    viewMode: "list" | "board";
+    setViewMode: (mode: "list" | "board") => void;
+    addTodo: (title: string, deadline: Date | null) => void;
+    updateTodo: (id: string, updates: Partial<Todo>) => void;
+    deleteTodo: (id: string) => void;
+    completeTodo: (id: string) => void;
+    uncompleteTodo: (id: string) => void;
+    reorderTodos: (activeId: string, overId: string) => void;
+    moveTodoStatus: (id: string, status: TodoStatus) => void;
+}
+
+const TodoContext = createContext<TodoContextType | undefined>(undefined);
+
+const STORAGE_KEY = "your-todo-data";
+
+// Sample data for initial load
+function getSampleTodos(): Todo[] {
+    const now = new Date();
+    return [
+        {
+            id: generateId(),
+            title: "유튜브 썸네일 제작",
+            status: "todo",
+            order: 0,
+            deadline: new Date(now.getTime() + 2 * 60 * 60 * 1000), // 2hrs
+            remindAt: new Date(now.getTime() + 1.5 * 60 * 60 * 1000),
+            createdBy: "me",
+            checklist: [],
+            createdAt: now,
+            updatedAt: now,
+        },
+        {
+            id: generateId(),
+            title: "클라이언트 미팅 자료 준비",
+            status: "todo",
+            order: 1,
+            deadline: new Date(now.getTime() + 5 * 60 * 60 * 1000), // 5hrs
+            remindAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+            createdBy: "me",
+            checklist: [
+                { id: "c1", text: "발표 자료 최종 검토", completed: false },
+                { id: "c2", text: "프린트 준비", completed: true },
+            ],
+            createdAt: now,
+            updatedAt: now,
+        },
+        {
+            id: generateId(),
+            title: "광고법 위반 검수",
+            description: "광고 영상 촬영 장소 방문",
+            status: "in_progress",
+            order: 2,
+            deadline: new Date(now.getTime() + 48 * 60 * 60 * 1000), // 2days
+            remindAt: null,
+            createdBy: "me",
+            assigneeName: "김대리",
+            checklist: [{ id: "c3", text: "광고법 위반 검수 필수", completed: false }],
+            geoFence: { lat: 37.5665, lng: 126.978, radius: 100, label: "촬영 장소" },
+            createdAt: now,
+            updatedAt: now,
+        },
+        {
+            id: generateId(),
+            title: "디자인 리뷰 미팅",
+            status: "waiting",
+            order: 3,
+            deadline: new Date(now.getTime() + 0.5 * 60 * 60 * 1000), // 30min
+            remindAt: null,
+            createdBy: "me",
+            assigneeName: "박팀장",
+            checklist: [],
+            createdAt: now,
+            updatedAt: now,
+        },
+        {
+            id: generateId(),
+            title: "주간 보고서 제출",
+            status: "done",
+            order: 4,
+            deadline: null,
+            remindAt: null,
+            createdBy: "me",
+            checklist: [],
+            createdAt: now,
+            updatedAt: now,
+            completedAt: now,
+        },
+    ];
+}
+
+export function TodoProvider({ children }: { children: ReactNode }) {
+    const [todos, setTodos] = useState<Todo[]>([]);
+    const [viewMode, setViewMode] = useState<"list" | "board">("list");
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    const loadLocal = useCallback(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored) as Todo[];
+                const restored = parsed.map((t) => ({
+                    ...t,
+                    deadline: t.deadline ? new Date(t.deadline) : null,
+                    remindAt: t.remindAt ? new Date(t.remindAt) : null,
+                    createdAt: new Date(t.createdAt),
+                    updatedAt: new Date(t.updatedAt),
+                    completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
+                }));
+                setTodos(restored);
+            } else {
+                setTodos(getSampleTodos());
+            }
+        } catch {
+            setTodos(getSampleTodos());
+        }
+        setIsLoaded(true);
+    }, []);
+
+    // Load from Firestore or localStorage
+    useEffect(() => {
+        if (isFirebaseConfigured() && db) {
+            const todosRef = collection(db, "todos");
+            const unsubscribe = onSnapshot(todosRef, (snapshot) => {
+                const newTodos: Todo[] = [];
+                snapshot.forEach((d) => {
+                    const data = d.data();
+                    newTodos.push({
+                        id: d.id,
+                        title: data.title,
+                        description: data.description,
+                        status: data.status,
+                        order: typeof data.order === 'number' ? data.order : 0,
+                        deadline: data.deadline?.toDate ? data.deadline.toDate() : null,
+                        remindAt: data.remindAt?.toDate ? data.remindAt.toDate() : null,
+                        assigneeId: data.assigneeId,
+                        assigneeName: data.assigneeName,
+                        createdBy: data.createdBy,
+                        shareLink: data.shareLink,
+                        checklist: data.checklist || [],
+                        geoFence: data.geoFence,
+                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
+                        completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
+                    } as Todo);
+                });
+                newTodos.sort((a, b) => a.order - b.order);
+                setTodos(newTodos);
+                setIsLoaded(true);
+            }, (error) => {
+                console.error("Firestore error:", error);
+                loadLocal();
+            });
+            return () => unsubscribe();
+        } else {
+            loadLocal();
+        }
+    }, [loadLocal]);
+
+    // Save to localStorage ONLY if firebase is not configured
+    useEffect(() => {
+        if (isLoaded && (!isFirebaseConfigured() || !db)) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+        }
+    }, [todos, isLoaded]);
+
+    const addTodo = useCallback(async (title: string, deadline: Date | null) => {
+        const now = new Date();
+        const newId = generateId();
+        const baseTodo = {
+            title,
+            status: "todo",
+            order: 0,
+            deadline,
+            remindAt: null,
+            createdBy: "me",
+            checklist: [],
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        if (isFirebaseConfigured() && db) {
+            try {
+                const batch = writeBatch(db);
+                // Prepend: we set this to 0, push all others by 1
+                todos.forEach(t => {
+                    const docRef = doc(db, "todos", t.id);
+                    batch.update(docRef, { order: t.order + 1, updatedAt: new Date() });
+                });
+                const newDocRef = doc(db, "todos", newId);
+                batch.set(newDocRef, { ...baseTodo, order: 0 });
+                await batch.commit();
+            } catch (err) {
+                console.error("Error adding todo:", err);
+            }
+        } else {
+            const newTodo: Todo = { id: newId, ...baseTodo } as Todo;
+            setTodos((prev) => [newTodo, ...prev.map((t) => ({ ...t, order: t.order + 1 }))]);
+        }
+    }, [todos]);
+
+    const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                const docRef = doc(db, "todos", id);
+                // Remove undefined values to avoid Firestore errors
+                const cleanUpdates = { ...updates, updatedAt: new Date() } as Record<string, any>;
+                Object.keys(cleanUpdates).forEach(key => {
+                    if (cleanUpdates[key] === undefined) delete cleanUpdates[key];
+                });
+                await updateDoc(docRef, cleanUpdates);
+            } catch (err) {
+                console.error("Error updating todo:", err);
+            }
+        } else {
+            setTodos((prev) =>
+                prev.map((t) =>
+                    t.id === id ? { ...t, ...updates, updatedAt: new Date() } : t
+                )
+            );
+        }
+    }, []);
+
+    const deleteTodo = useCallback(async (id: string) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                await deleteDoc(doc(db, "todos", id));
+            } catch (err) {
+                console.error("Error deleting todo:", err);
+            }
+        } else {
+            setTodos((prev) => prev.filter((t) => t.id !== id));
+        }
+    }, []);
+
+    const completeTodo = useCallback(async (id: string) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                await updateDoc(doc(db, "todos", id), {
+                    status: "done",
+                    completedAt: new Date(),
+                    updatedAt: new Date()
+                });
+            } catch (err) {
+                console.error("Error completing todo:", err);
+            }
+        } else {
+            setTodos((prev) =>
+                prev.map((t) =>
+                    t.id === id
+                        ? { ...t, status: "done" as TodoStatus, completedAt: new Date(), updatedAt: new Date() }
+                        : t
+                )
+            );
+        }
+    }, []);
+
+    const uncompleteTodo = useCallback(async (id: string) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                await updateDoc(doc(db, "todos", id), {
+                    status: "todo",
+                    completedAt: deleteField(),
+                    updatedAt: new Date()
+                });
+            } catch (err) {
+                console.error("Error uncompleting todo:", err);
+            }
+        } else {
+            setTodos((prev) =>
+                prev.map((t) =>
+                    t.id === id
+                        ? { ...t, status: "todo" as TodoStatus, completedAt: undefined, updatedAt: new Date() }
+                        : t
+                )
+            );
+        }
+    }, []);
+
+    const reorderTodos = useCallback(async (activeId: string, overId: string) => {
+        const oldIndex = todos.findIndex((t) => t.id === activeId);
+        const newIndex = todos.findIndex((t) => t.id === overId);
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const reordered = [...todos];
+        const [moved] = reordered.splice(oldIndex, 1);
+        reordered.splice(newIndex, 0, moved);
+        const mapped = reordered.map((t, i) => ({ ...t, order: i }));
+
+        if (isFirebaseConfigured() && db) {
+            try {
+                const batch = writeBatch(db);
+                mapped.forEach(t => {
+                    const docRef = doc(db, "todos", t.id);
+                    batch.update(docRef, { order: t.order, updatedAt: new Date() });
+                });
+                await batch.commit();
+            } catch (err) {
+                console.error("Error reordering todos:", err);
+            }
+        } else {
+            setTodos(mapped);
+        }
+    }, [todos]);
+
+    const moveTodoStatus = useCallback(async (id: string, status: TodoStatus) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                const updatePayload: Record<string, any> = {
+                    status,
+                    updatedAt: new Date(),
+                };
+                if (status === "done") {
+                    updatePayload.completedAt = new Date();
+                } else {
+                    updatePayload.completedAt = deleteField();
+                }
+                await updateDoc(doc(db, "todos", id), updatePayload);
+            } catch (err) {
+                console.error("Error moving todo status:", err);
+            }
+        } else {
+            setTodos((prev) =>
+                prev.map((t) =>
+                    t.id === id
+                        ? {
+                            ...t,
+                            status,
+                            updatedAt: new Date(),
+                            completedAt: status === "done" ? new Date() : undefined,
+                        }
+                        : t
+                )
+            );
+        }
+    }, []);
+
+    return (
+        <TodoContext.Provider
+            value={{
+                todos,
+                viewMode,
+                setViewMode,
+                addTodo,
+                updateTodo,
+                deleteTodo,
+                completeTodo,
+                uncompleteTodo,
+                reorderTodos,
+                moveTodoStatus,
+            }}
+        >
+            {children}
+        </TodoContext.Provider>
+    );
+}
+
+export function useTodos() {
+    const ctx = useContext(TodoContext);
+    if (!ctx) throw new Error("useTodos must be used within a TodoProvider");
+    return ctx;
+}

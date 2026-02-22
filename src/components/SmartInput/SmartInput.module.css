@@ -1,0 +1,228 @@
+.container {
+    margin-bottom: var(--space-5);
+}
+
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-glass);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-base);
+}
+
+.inputWrapper.focused {
+    border-color: var(--color-accent-cyan);
+    box-shadow: 0 0 0 3px var(--color-accent-cyan-glow), var(--glass-shadow);
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: color var(--transition-base);
+}
+
+.inputWrapper.focused .icon {
+    color: var(--color-accent-cyan);
+}
+
+.input {
+    flex: 1;
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+    background: transparent;
+    min-width: 0;
+}
+
+.input::placeholder {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.submitBtn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue));
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: white;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(6, 214, 160, 0.25);
+}
+
+.submitBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 214, 160, 0.35);
+}
+
+.submitBtn:active {
+    transform: translateY(0);
+}
+
+/* Always-visible deadline row */
+.deadlineRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2) 0;
+}
+
+.deadlineBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-full);
+    background: var(--color-accent-blue-glow);
+    color: var(--color-accent-blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.deadlineBadge:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.deadlineBadgeActive {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.chevron {
+    transition: transform var(--transition-fast);
+}
+
+.chevronUp {
+    transform: rotate(180deg);
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 4px 10px;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-full);
+}
+
+.badgeTitle {
+    background: var(--color-accent-cyan-glow);
+    color: var(--color-accent-cyan);
+    border: 1px solid rgba(6, 214, 160, 0.3);
+}
+
+/* Custom picker panel */
+.pickerPanel {
+    overflow: hidden;
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: rgba(15, 23, 40, 0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.pickerSection {
+    margin-bottom: var(--space-4);
+}
+
+.pickerLabel {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.04em;
+}
+
+/* Date & Time rows */
+.dateRow,
+.timeRow {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Unified select field style */
+.selectField {
+    flex: 1;
+    padding: var(--space-3);
+    background: var(--color-bg-input);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+}
+
+.selectField:focus {
+    border-color: var(--color-accent-cyan);
+    box-shadow: 0 0 0 2px var(--color-accent-cyan-glow);
+}
+
+/* Confirm / Cancel buttons */
+.pickerActions {
+    display: flex;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cancelBtn,
+.confirmBtn {
+    flex: 1;
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    text-align: center;
+}
+
+.cancelBtn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-secondary);
+}
+
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+}
+
+.confirmBtn {
+    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue));
+    color: white;
+    box-shadow: 0 3px 12px rgba(6, 214, 160, 0.3);
+}
+
+.confirmBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(6, 214, 160, 0.4);
+}
+
+.confirmBtn:active {
+    transform: translateY(0);
+}
