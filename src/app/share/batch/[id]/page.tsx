@@ -25,17 +25,29 @@ function BatchShareContent() {
 
     // Check for nickname first, if none exists, show modal
     useEffect(() => {
-        const nickname = localStorage.getItem("your-todo-nickname");
-        if (nickname) {
-            setMyNickname(nickname);
-        } else {
+        try {
+            const nickname = localStorage.getItem("your-todo-nickname");
+            if (nickname) {
+                setMyNickname(nickname);
+            } else {
+                setShowNicknameModal(true);
+            }
+        } catch (err) {
+            // Fallback for strict browsers or in-app sandboxes that throw on localStorage access
+            console.warn("localStorage access denied", err);
             setShowNicknameModal(true);
         }
     }, []);
 
     // Load and bind only after nickname is established
     useEffect(() => {
-        if (!db || !batchId || !myNickname) return;
+        if (!myNickname) return; // Wait until they have a nickname
+
+        if (!db || !batchId) {
+            setError(true);
+            setLoading(false);
+            return;
+        }
 
         const applyBindingAndListen = async () => {
             try {
@@ -109,12 +121,18 @@ function BatchShareContent() {
 
         let unsubPromise = applyBindingAndListen();
 
+        // Hard timeout fallback: if Firebase completely hangs, break the loading state after 4 seconds
+        const timeoutId = setTimeout(() => {
+            setLoading(false);
+        }, 4000);
+
         return () => {
+            clearTimeout(timeoutId);
             unsubPromise.then(unsub => {
                 if (unsub) unsub();
             });
         };
-    }, [batchId]);
+    }, [batchId, myNickname]);
 
     const handleComplete = async (todoId: string, currentStatus: string) => {
         if (!db) return;
