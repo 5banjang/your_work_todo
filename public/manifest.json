@@ -3,6 +3,8 @@
   "short_name": "Your To-Do",
   "description": "AI 기반 스마트 할 일 관리 앱",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#0a0e17",
   "theme_color": "#0a0e17",
