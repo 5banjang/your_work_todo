@@ -87,7 +87,23 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 };
 
                 if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                    new Notification(title, options);
+                    try {
+                        // Mobile browsers often ban new Notification() and require ServiceWorker
+                        navigator.serviceWorker.ready.then((reg) => {
+                            if (reg) {
+                                reg.showNotification(title, options).catch((err) => {
+                                    console.error("SW showNotification error:", err);
+                                    new Notification(title, options); // fallback
+                                });
+                            } else {
+                                new Notification(title, options);
+                            }
+                        }).catch(() => {
+                            new Notification(title, options); // fallback
+                        });
+                    } catch (e) {
+                        console.error("Push Notification Error:", e);
+                    }
                 }
             };
             doPush();
@@ -148,8 +164,23 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 icon: "/icons/icon-192.png",
                 vibrate: [200, 100, 200]
             };
-            if (Notification.permission === "granted") {
-                new Notification(title, options);
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                try {
+                    navigator.serviceWorker.ready.then((reg) => {
+                        if (reg) {
+                            reg.showNotification(title, options).catch((err) => {
+                                console.error("SW showNotification error:", err);
+                                new Notification(title, options);
+                            });
+                        } else {
+                            new Notification(title, options);
+                        }
+                    }).catch(() => {
+                        new Notification(title, options);
+                    });
+                } catch (e) {
+                    console.error("Foreground Push Error:", e);
+                }
             }
         });
 
