@@ -52,18 +52,20 @@ function Header({ onShareList }: { onShareList: () => void }) {
           title="푸시 알림 켜기"
         >
           {permGranted || fcmToken ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            /* ON State: Filled bell with ring waves */
+            <svg viewBox="0 0 24 24" fill="var(--color-accent-cyan)" stroke="var(--color-accent-cyan)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" filter="drop-shadow(0 0 4px var(--color-accent-cyan-glow))">
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              <path d="M4 2C2.8 3.7 2 5.7 2 8" />
-              <path d="M22 8c0-2.1-.8-4-2-5.8" />
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M4 2C2.8 3.7 2 5.7 2 8" stroke="var(--color-accent-cyan)" strokeWidth="2" fill="none" />
+              <path d="M22 8c0-2.1-.8-4-2-5.8" stroke="var(--color-accent-cyan)" strokeWidth="2" fill="none" />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" opacity="0.6">
+            /* OFF State: Crossed out gray bell */
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" opacity="0.8">
               <path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" />
               <path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" />
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              <path d="m2 2 20 20" />
+              <line x1="2" y1="2" x2="22" y2="22" stroke="var(--color-danger)" strokeWidth="2" />
             </svg>
           )}
         </button>

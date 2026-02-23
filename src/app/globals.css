@@ -430,39 +430,43 @@ img {
 /* ---------- Family Theme (Warm & Pastel) ---------- */
 :root[data-theme="family"] {
   --font-primary: 'Gowun Dodum', 'Noto Sans KR', serif;
-  --color-bg-primary: #fdfbf7;
-  /* Warm soft paper */
-  --color-bg-secondary: #f4eee6;
-  --color-bg-card: rgba(255, 255, 255, 0.9);
-  --color-bg-glass: rgba(255, 255, 255, 0.7);
-  --color-bg-glass-hover: rgba(255, 255, 255, 0.9);
-  --color-bg-input: rgba(140, 130, 115, 0.08);
-  --color-modal-bg: #fdfbf7;
+  --color-bg-primary: #f2fbfa;
+  /* Soft mint/green white */
+  --color-bg-secondary: #e6f4f1;
+  /* Light sage */
+  --color-bg-card: rgba(255, 255, 255, 0.85);
+  --color-bg-glass: rgba(255, 255, 255, 0.75);
+  --color-bg-glass-hover: #e6f4f1;
+  --color-bg-input: rgba(43, 116, 106, 0.08);
+  --color-modal-bg: #f2fbfa;
 
-  --glass-border: rgba(140, 130, 115, 0.2);
-  --glass-border-hover: rgba(140, 130, 115, 0.4);
-  --glass-shadow: 0 4px 20px rgba(140, 130, 115, 0.08);
+  --glass-border: rgba(43, 116, 106, 0.2);
+  --glass-border-hover: rgba(43, 116, 106, 0.4);
+  --glass-shadow: 0 4px 20px rgba(43, 116, 106, 0.08);
   --border-width-glass: 1px;
   --border-width-card: 1px;
 
-  --color-text-primary: #3f3933;
-  /* Dark earthy brown */
-  --color-text-secondary: #70675f;
-  --color-text-muted: #a69d95;
+  --color-text-primary: #1e3a34;
+  /* Deep forest green / dark slate */
+  --color-text-secondary: #2f544c;
+  --color-text-muted: #6b8c85;
   --color-text-inverse: #ffffff;
 
-  /* Warm accents */
-  --color-accent-cyan: #14b8a6;
-  /* Soft Teal */
-  --color-accent-cyan-glow: rgba(20, 184, 166, 0.2);
-  --color-accent-blue: #e17055;
-  /* Soft Rose/Coral */
-  --color-accent-blue-glow: rgba(225, 112, 85, 0.2);
+  /* Natural green accents */
+  --color-accent-cyan: #2a9d8f;
+  /* Deep sage / teal */
+  --color-accent-cyan-glow: rgba(42, 157, 143, 0.25);
+  --color-accent-blue: #e9c46a;
+  /* Warm sun yellow contrast */
+  --color-accent-blue-glow: rgba(233, 196, 106, 0.25);
 
-  --color-safe: #2ecc71;
-  --color-warning: #f1c40f;
-  --color-danger: #e74c3c;
-  --color-info: #9b59b6;
+  --color-safe: #2a9d8f;
+  --color-warning: #f4a261;
+  /* Soft orange */
+  --color-danger: #e76f51;
+  /* Soft rust red */
+  --color-info: #264653;
+  /* Dark slate */
 
   /* Softer corners overall */
   --radius-sm: 8px;
@@ -473,6 +477,6 @@ img {
 
 :root[data-theme="family"] body::before {
   background:
-    radial-gradient(ellipse 500px 400px at 10% 10%, rgba(20, 184, 166, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 500px at 90% 90%, rgba(225, 112, 85, 0.05) 0%, transparent 70%);
+    radial-gradient(ellipse 500px 400px at 10% 10%, rgba(42, 157, 143, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at 90% 90%, rgba(233, 196, 106, 0.08) 0%, transparent 70%);
 }
