@@ -40,7 +40,8 @@ export default function LocationPicker({
         }
 
         const script = document.createElement("script");
-        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
+        // Add a timestamp cache-buster to forcefully bypass all browser/SW caches
+        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder&_t=${Date.now()}`;
         script.async = true;
         script.onload = () => setIsLoaded(true);
         script.onerror = () => setErrorMsg("지도 스크립트를 불러오지 못했습니다.");
