@@ -70,7 +70,7 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
             geoFence: locationLabel && locationLat && locationLng
                 ? { lat: locationLat, lng: locationLng, radius: 100, label: locationLabel }
                 : undefined,
-            shareLink: `https://your-todo.app/share/${todo.id}`,
+            shareLink: typeof window !== "undefined" ? `${window.location.origin}/share/${todo.id}` : "",
         });
 
         onClose();
@@ -80,6 +80,23 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
         deleteTodo(todo.id);
         onClose();
     }, [todo.id, deleteTodo, onClose]);
+
+    const handleCopyLink = useCallback(() => {
+        const url = `${window.location.origin}/share/${todo.id}`;
+        const text = `[할 일 요청]\n${todo.title}\n\n👉 링크에서 확인 및 완료하기:\n${url}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: "할 일 요청",
+                text: text,
+            }).catch(() => { });
+        } else {
+            navigator.clipboard.writeText(text).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        }
+    }, [todo.title, todo.id]);
 
     return (
         <AnimatePresence>
@@ -245,6 +262,13 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                                 <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             삭제
+                        </button>
+                        <button className={`${styles.actionBtn} ${styles.btnNeutral}`} onClick={handleCopyLink} type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            {copied ? "복사됨" : "공유"}
                         </button>
                         <button className={`${styles.actionBtn} ${styles.btnSuccess}`} onClick={handleSave} type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">

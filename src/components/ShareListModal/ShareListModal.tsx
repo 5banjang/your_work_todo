@@ -63,6 +63,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                     line += ` 👤${t.assigneeName}`;
                 }
                 lines.push(line);
+                lines.push(`     🔗 ${window.location.origin}/share/${t.id}`);
             });
             lines.push("");
         }

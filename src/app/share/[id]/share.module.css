@@ -1,0 +1,124 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: #0d0f12;
+    color: #e2e8f0;
+    font-family: inherit;
+}
+
+.card {
+    width: 100%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.icon {
+    font-size: 1.5rem;
+    background: rgba(0, 245, 255, 0.1);
+    padding: 0.5rem;
+    border-radius: 12px;
+}
+
+.title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+.infoBox {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 2.5rem;
+}
+
+.infoRow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.value {
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.actionContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.completeBtn {
+    width: 100%;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #00f5ff 0%, #0088ff 100%);
+    color: #0d0f12;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 245, 255, 0.2);
+}
+
+.completeBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 245, 255, 0.35);
+}
+
+.completeBtn:active {
+    transform: translateY(1px);
+}
+
+.completeBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.doneMessage {
+    background: rgba(0, 200, 83, 0.15);
+    color: #00e676;
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    padding: 1.25rem;
+    border-radius: 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.loading,
+.error {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    text-align: center;
+}
