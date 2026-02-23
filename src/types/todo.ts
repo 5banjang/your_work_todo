@@ -26,6 +26,7 @@ export interface Todo {
     assigneeName?: string;
     createdBy: string;
     shareLink?: string;
+    batchId?: string;
     checklist: ChecklistItem[];
 
 

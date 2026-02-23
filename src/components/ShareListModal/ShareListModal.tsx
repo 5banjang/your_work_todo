@@ -13,7 +13,7 @@ interface ShareListModalProps {
 }
 
 export default function ShareListModal({ onClose }: ShareListModalProps) {
-    const { todos } = useTodos();
+    const { todos, updateTodo } = useTodos();
     const [copied, setCopied] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(
         new Set(todos.filter((t) => t.status !== "done").map((t) => t.id))
@@ -39,13 +39,18 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         }
     }, [selectedIds.size, todos]);
 
+    const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
+
     // Generate shareable link and text
     const shareText = useMemo(() => {
         const selected = todos.filter((t) => selectedIds.has(t.id));
         if (selected.length === 0) return "";
 
-        const ids = selected.map(t => t.id).join(",");
-        const shareUrl = `${window.location.origin}/share/multi?ids=${ids}`;
+        // Use a consistent batchId while the modal is open to prevent changing the link
+        const batchIdToken = currentBatchId || Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        if (!currentBatchId) setCurrentBatchId(batchIdToken);
+
+        const shareUrl = `${window.location.origin}/share/batch/${batchIdToken}`;
 
         const lines: string[] = [];
         lines.push("📋 할 일 리스트 공유");
@@ -57,12 +62,23 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         return lines.join("\n");
     }, [todos, selectedIds]);
 
-    const handleCopy = useCallback(() => {
+    const processBatchSave = useCallback(async () => {
+        if (!currentBatchId || selectedIds.size === 0) return;
+
+        // Update all selected tasks with the generated batchId
+        const promises = Array.from(selectedIds).map(id => {
+            return updateTodo(id, { batchId: currentBatchId });
+        });
+        await Promise.all(promises);
+    }, [selectedIds, currentBatchId, updateTodo]);
+
+    const handleCopy = useCallback(async () => {
+        await processBatchSave();
         navigator.clipboard.writeText(shareText).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         });
-    }, [shareText]);
+    }, [shareText, processBatchSave]);
 
     const handleNativeShare = useCallback(async () => {
         if (navigator.share) {
