@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
   title: "Your To-Do — 스마트 할 일 관리",
@@ -37,10 +38,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <ServiceWorkerRegistrar />
-        <div className="app-container">
-          {children}
-        </div>
+        <ThemeProvider>
+          <ServiceWorkerRegistrar />
+          <div className="app-container">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

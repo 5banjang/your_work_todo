@@ -364,3 +364,100 @@ img {
     radial-gradient(ellipse 500px 500px at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 70%),
     radial-gradient(ellipse 400px 300px at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
 }
+
+/* ---------- Kids Theme (Playful & Bright) ---------- */
+:root[data-theme="kids"] {
+  --color-bg-primary: #fffbeb;
+  /* Light yellow background */
+  --color-bg-secondary: #fef3c7;
+  --color-bg-card: rgba(255, 255, 255, 0.85);
+  --color-bg-glass: rgba(255, 255, 255, 0.75);
+  --color-bg-glass-hover: rgba(255, 255, 255, 0.95);
+  --color-bg-input: rgba(251, 191, 36, 0.15);
+  /* Amber tint */
+
+  --glass-border: rgba(245, 158, 11, 0.2);
+  --glass-border-hover: rgba(245, 158, 11, 0.4);
+  --glass-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+
+  --color-text-primary: #451a03;
+  /* Very dark brown/amber */
+  --color-text-secondary: #78350f;
+  --color-text-muted: #b45309;
+  --color-text-inverse: #ffffff;
+
+  /* Playful accents */
+  --color-accent-cyan: #3b82f6;
+  /* Blue accent instead of cyan */
+  --color-accent-cyan-glow: rgba(59, 130, 246, 0.4);
+  --color-accent-blue: #f59e0b;
+  /* Amber/Orange accent */
+  --color-accent-blue-glow: rgba(245, 158, 11, 0.4);
+
+  --color-safe: #10b981;
+  /* Brighter green */
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #6366f1;
+  /* Indigo */
+
+  /* Extra rounded corners */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+:root[data-theme="kids"] body::before {
+  background:
+    radial-gradient(ellipse 500px 400px at 20% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at 80% 100%, rgba(245, 158, 11, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+}
+
+/* ---------- Family Theme (Warm & Pastel) ---------- */
+:root[data-theme="family"] {
+  --color-bg-primary: #fafaf9;
+  /* Warm stone */
+  --color-bg-secondary: #f5f5f4;
+  --color-bg-card: rgba(255, 255, 255, 0.8);
+  --color-bg-glass: rgba(255, 255, 255, 0.65);
+  --color-bg-glass-hover: rgba(255, 255, 255, 0.85);
+  --color-bg-input: rgba(120, 113, 108, 0.08);
+
+  --glass-border: rgba(120, 113, 108, 0.15);
+  --glass-border-hover: rgba(120, 113, 108, 0.3);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+
+  --color-text-primary: #1c1917;
+  /* Dark stone */
+  --color-text-secondary: #57534e;
+  --color-text-muted: #a8a29e;
+  --color-text-inverse: #ffffff;
+
+  /* Warm accents */
+  --color-accent-cyan: #14b8a6;
+  /* Teal */
+  --color-accent-cyan-glow: rgba(20, 184, 166, 0.25);
+  --color-accent-blue: #f43f5e;
+  /* Rose */
+  --color-accent-blue-glow: rgba(244, 63, 94, 0.25);
+
+  --color-safe: #10b981;
+  --color-warning: #eab308;
+  --color-danger: #f43f5e;
+  --color-info: #8b5cf6;
+
+  /* Softer corners */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+:root[data-theme="family"] body::before {
+  background:
+    radial-gradient(ellipse 500px 400px at 0% 0%, rgba(20, 184, 166, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at 100% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
+}

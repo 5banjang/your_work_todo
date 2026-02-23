@@ -11,31 +11,19 @@ import ShareModal from "@/components/ShareModal/ShareModal";
 import ShareListModal from "@/components/ShareListModal/ShareListModal";
 import GeoFenceAlert from "@/components/GeoFenceAlert/GeoFenceAlert";
 import { useGeoFence } from "@/hooks/useGeoFence";
+import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
 function Header({ onShareList }: { onShareList: () => void }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [permGranted, setPermGranted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light") {
-      setTheme("light");
-      document.documentElement.setAttribute("data-theme", "light");
-    }
     if (typeof window !== "undefined" && "Notification" in window) {
       setPermGranted(Notification.permission === "granted");
     }
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
 
   const handlePushReq = async () => {
     await requestPushPermission();
@@ -89,16 +77,9 @@ function Header({ onShareList }: { onShareList: () => void }) {
             <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
           </svg>
         </button>
-        <button
-          className={styles.shareListBtn}
-          onClick={toggleTheme}
-          type="button"
-          aria-label="테마 변경"
-          title="테마 변경"
-          style={{ marginLeft: 8 }}
-        >
-          {theme === "dark" ? "☀️" : "🌙"}
-        </button>
+        <div style={{ marginLeft: 8 }}>
+          <ThemeSelector />
+        </div>
       </div>
     </header>
   );
