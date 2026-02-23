@@ -18,17 +18,35 @@ import styles from "./page.module.css";
 function Header({ onShareList }: { onShareList: () => void }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
-      setPermGranted(Notification.permission === "granted");
+      const granted = Notification.permission === "granted";
+      setPermGranted(granted);
+
+      const storedPref = localStorage.getItem("your-todo-push-active");
+      if (storedPref !== null) {
+        setPushEnabled(granted && storedPref === "true");
+      } else {
+        setPushEnabled(granted);
+      }
     }
   }, []);
 
   const handlePushReq = async () => {
-    await requestPushPermission();
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPermGranted(Notification.permission === "granted");
+    if (!permGranted) {
+      await requestPushPermission();
+      if (typeof window !== "undefined" && "Notification" in window) {
+        const granted = Notification.permission === "granted";
+        setPermGranted(granted);
+        setPushEnabled(granted);
+        localStorage.setItem("your-todo-push-active", granted ? "true" : "false");
+      }
+    } else {
+      const nextState = !pushEnabled;
+      setPushEnabled(nextState);
+      localStorage.setItem("your-todo-push-active", nextState ? "true" : "false");
     }
   };
 
@@ -49,9 +67,9 @@ function Header({ onShareList }: { onShareList: () => void }) {
           onClick={handlePushReq}
           type="button"
           aria-label="알림 설정"
-          title="푸시 알림 켜기"
+          title={pushEnabled ? "푸시 알림 끄기" : "푸시 알림 켜기"}
         >
-          {permGranted || fcmToken ? (
+          {pushEnabled ? (
             /* ON State: Filled bell with ring waves */
             <svg viewBox="0 0 24 24" fill="var(--color-accent-cyan)" stroke="var(--color-accent-cyan)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" filter="drop-shadow(0 0 4px var(--color-accent-cyan-glow))">
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
