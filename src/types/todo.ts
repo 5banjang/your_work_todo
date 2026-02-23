@@ -8,12 +8,7 @@ export interface ChecklistItem {
     completed: boolean;
 }
 
-export interface GeoFence {
-    lat: number;
-    lng: number;
-    radius: number; // meters
-    label: string;
-}
+
 
 export interface Todo {
     id: string;
@@ -33,13 +28,12 @@ export interface Todo {
     shareLink?: string;
     checklist: ChecklistItem[];
 
-    // Location
-    geoFence?: GeoFence;
 
     // Metadata
     createdAt: Date;
     updatedAt: Date;
     completedAt?: Date;
+    lastCompletedBy?: string;
 }
 
 export interface ParsedInput {

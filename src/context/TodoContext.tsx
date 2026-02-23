@@ -44,6 +44,58 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [fcmToken, setFcmToken] = useState<string | null>(null);
 
+    const prevTodosRef = React.useRef<Todo[]>([]);
+    const nicknameRef = React.useRef("");
+
+    useEffect(() => {
+        const syncNickname = () => {
+            nicknameRef.current = localStorage.getItem("your-todo-nickname") || "누군가";
+        };
+        syncNickname();
+        window.addEventListener("storage", syncNickname);
+        return () => window.removeEventListener("storage", syncNickname);
+    }, []);
+
+    // Detect when someone ELSE completes a todo and fire a local push notification
+    useEffect(() => {
+        if (!isLoaded) return;
+        const prev = prevTodosRef.current;
+        const currentTodos = todos;
+        const myNickname = nicknameRef.current;
+
+        const newlyCompleted = currentTodos.filter(t => {
+            if (t.status !== "done") return false;
+            const old = prev.find(p => p.id === t.id);
+            if (!old || old.status === "done") return false;
+            // Only notify if someone else completed it, or if both have no name, assume it's me for now if it originated locally
+            // We use a simple check: if lastCompletedBy matches my nickname, don't notify.
+            if (t.lastCompletedBy && t.lastCompletedBy === myNickname) return false;
+            return true;
+        });
+
+        newlyCompleted.forEach(t => {
+            const doPush = () => {
+                const soundOn = localStorage.getItem("your-todo-sound") !== "false";
+                const vibrateOn = localStorage.getItem("your-todo-vibrate") !== "false";
+                const who = t.lastCompletedBy || "누군가";
+                const title = "완료 알림";
+                const options: any = {
+                    body: `${who}님이 '${t.title}' 할 일을 완료했습니다!`,
+                    icon: "/icons/icon-192.png",
+                    vibrate: vibrateOn ? [200, 100, 200] : undefined,
+                    silent: !soundOn && !vibrateOn
+                };
+
+                if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                    new Notification(title, options);
+                }
+            };
+            doPush();
+        });
+
+        prevTodosRef.current = currentTodos;
+    }, [todos, isLoaded]);
+
     const requestPushPermission = async () => {
         if (!("Notification" in window)) return;
         try {
@@ -58,6 +110,21 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                     });
                     console.log("FCM Token received:", token);
                     setFcmToken(token);
+
+                    // Save token to Firestore so Cloud Functions can broadcast to this device
+                    if (isFirebaseConfigured() && db && token) {
+                        try {
+                            const nickname = localStorage.getItem("your-todo-nickname") || "누군가";
+                            await setDoc(doc(db, "fcmTokens", token), {
+                                token: token,
+                                userNickname: nickname,
+                                updatedAt: new Date()
+                            }, { merge: true });
+                            console.log("FCM Token saved to DB for user:", nickname);
+                        } catch (tokenErr) {
+                            console.error("Error saving FCM token to DB:", tokenErr);
+                        }
+                    }
                 }
             }
         } catch (err) {
@@ -194,7 +261,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
         if (isFirebaseConfigured() && db) {
             try {
-                const docRef = doc(db, "todos", id);
+                const docRef = doc(db!, "todos", id);
                 // Remove undefined values to avoid Firestore errors
                 const cleanUpdates = { ...updates, updatedAt: new Date() } as Record<string, any>;
                 Object.keys(cleanUpdates).forEach(key => {
@@ -216,7 +283,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const deleteTodo = useCallback(async (id: string) => {
         if (isFirebaseConfigured() && db) {
             try {
-                await deleteDoc(doc(db, "todos", id));
+                await deleteDoc(doc(db!, "todos", id));
             } catch (err) {
                 console.error("Error deleting todo:", err);
             }
@@ -226,12 +293,14 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const completeTodo = useCallback(async (id: string) => {
+        const nickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
         if (isFirebaseConfigured() && db) {
             try {
-                await updateDoc(doc(db, "todos", id), {
+                await updateDoc(doc(db!, "todos", id), {
                     status: "done",
                     completedAt: new Date(),
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    lastCompletedBy: nickname
                 });
             } catch (err) {
                 console.error("Error completing todo:", err);
@@ -240,7 +309,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             setTodos((prev) =>
                 prev.map((t) =>
                     t.id === id
-                        ? { ...t, status: "done" as TodoStatus, completedAt: new Date(), updatedAt: new Date() }
+                        ? { ...t, status: "done" as TodoStatus, completedAt: new Date(), updatedAt: new Date(), lastCompletedBy: nickname }
                         : t
                 )
             );
@@ -250,7 +319,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const uncompleteTodo = useCallback(async (id: string) => {
         if (isFirebaseConfigured() && db) {
             try {
-                await updateDoc(doc(db, "todos", id), {
+                await updateDoc(doc(db!, "todos", id), {
                     status: "todo",
                     completedAt: deleteField(),
                     updatedAt: new Date()
@@ -316,6 +385,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     }, [todos]);
 
     const moveTodoStatus = useCallback(async (id: string, status: TodoStatus) => {
+        const nickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
         if (isFirebaseConfigured() && db) {
             try {
                 const updatePayload: Record<string, any> = {
@@ -324,10 +394,12 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 };
                 if (status === "done") {
                     updatePayload.completedAt = new Date();
+                    updatePayload.lastCompletedBy = nickname;
                 } else {
                     updatePayload.completedAt = deleteField();
+                    updatePayload.lastCompletedBy = deleteField();
                 }
-                await updateDoc(doc(db, "todos", id), updatePayload);
+                await updateDoc(doc(db!, "todos", id), updatePayload);
             } catch (err) {
                 console.error("Error moving todo status:", err);
             }
@@ -340,6 +412,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                             status,
                             updatedAt: new Date(),
                             completedAt: status === "done" ? new Date() : undefined,
+                            lastCompletedBy: status === "done" ? nickname : undefined,
                         }
                         : t
                 )

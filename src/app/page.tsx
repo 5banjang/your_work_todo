@@ -9,9 +9,8 @@ import KanbanBoard from "@/components/KanbanBoard/KanbanBoard";
 import BottomNav from "@/components/BottomNav/BottomNav";
 import ShareModal from "@/components/ShareModal/ShareModal";
 import ShareListModal from "@/components/ShareListModal/ShareListModal";
-import GeoFenceAlert from "@/components/GeoFenceAlert/GeoFenceAlert";
-import { useGeoFence } from "@/hooks/useGeoFence";
 import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
+import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
@@ -19,6 +18,7 @@ function Header({ onShareList }: { onShareList: () => void }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -104,7 +104,26 @@ function Header({ onShareList }: { onShareList: () => void }) {
         <div style={{ marginLeft: 8 }}>
           <ThemeSelector />
         </div>
+        <button
+          className={styles.shareListBtn}
+          onClick={() => setIsSettingsOpen(true)}
+          type="button"
+          aria-label="앱 설정"
+          title="앱 설정"
+          style={{ marginLeft: 8 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+          </svg>
+        </button>
       </div>
+
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <AppSettingsModal onClose={() => setIsSettingsOpen(false)} />
+        )}
+      </AnimatePresence>
     </header>
   );
 }
@@ -113,7 +132,6 @@ function MainContent() {
   const { viewMode, todos } = useTodos();
   const [settingsTodo, setSettingsTodo] = useState<Todo | null>(null);
   const [showShareList, setShowShareList] = useState(false);
-  const { triggeredTodo, clearTrigger } = useGeoFence();
 
   const handleOpenSettings = useCallback((todo: Todo) => {
     setSettingsTodo(todo);
@@ -171,16 +189,6 @@ function MainContent() {
         )}
       </AnimatePresence>
 
-      {/* GeoFence Alert */}
-      <AnimatePresence>
-        {triggeredTodo && (
-          <GeoFenceAlert
-            locationLabel={triggeredTodo.label}
-            onConfirm={clearTrigger}
-            onDismiss={clearTrigger}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 }

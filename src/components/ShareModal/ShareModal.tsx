@@ -7,7 +7,6 @@ import type { Todo, ChecklistItem } from "@/types/todo";
 import { generateId } from "@/lib/utils";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import LocationPicker from "../LocationPicker/LocationPicker";
 import styles from "./ShareModal.module.css";
 
 interface ShareModalProps {
@@ -28,12 +27,6 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
     const [targetMinute, setTargetMinute] = useState((Math.floor(initDate.getMinutes() / 10) * 10).toString().padStart(2, "0"));
     const [remindMinutes, setRemindMinutes] = useState("30");
     const [copied, setCopied] = useState(false);
-
-    // GeoFence State
-    const [locationLabel, setLocationLabel] = useState(todo.geoFence?.label || "");
-    const [locationLat, setLocationLat] = useState(todo.geoFence?.lat);
-    const [locationLng, setLocationLng] = useState(todo.geoFence?.lng);
-    const [showMap, setShowMap] = useState(false);
 
     const handleSetToday = useCallback(() => {
         const now = new Date();
@@ -67,14 +60,11 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
             checklist: [],
             deadline: deadlineDate,
             remindAt,
-            geoFence: locationLabel && locationLat && locationLng
-                ? { lat: locationLat, lng: locationLng, radius: 100, label: locationLabel }
-                : undefined,
             shareLink: typeof window !== "undefined" ? `${window.location.origin}/share/${todo.id}` : "",
         });
 
         onClose();
-    }, [todo.id, targetYear, targetMonth, targetDate, targetHour, targetMinute, timeFormat, remindMinutes, locationLabel, locationLat, locationLng, updateTodo, onClose]);
+    }, [todo.id, targetYear, targetMonth, targetDate, targetHour, targetMinute, timeFormat, remindMinutes, updateTodo, onClose]);
 
     const handleDelete = useCallback(() => {
         deleteTodo(todo.id);
@@ -205,46 +195,7 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
 
 
 
-                        {/* Location */}
-                        <div className={styles.field}>
-                            <label className={styles.label}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                    <circle cx="12" cy="10" r="3" />
-                                </svg>
-                                위치 (지오펜싱)
-                            </label>
-
-                            {locationLabel ? (
-                                <div className={styles.locationSelected} onClick={() => setShowMap(true)}>
-                                    <div className={styles.locationText}>
-                                        <span className={styles.locationName}>{locationLabel}</span>
-                                        <span className={styles.locationSub}>클릭하여 위치 변경</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className={styles.clearLocationBtn}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setLocationLabel("");
-                                            setLocationLat(undefined);
-                                            setLocationLng(undefined);
-                                        }}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                                            <path d="M18 6 6 18M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ) : (
-                                <button className={styles.addLocationBtn} onClick={() => setShowMap(true)} type="button">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                                    </svg>
-                                    지도에서 장소 선택
-                                </button>
-                            )}
-                        </div>
+                        {/* Removed Location Section */}
 
                     </div>
 
@@ -282,22 +233,6 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                 </motion.div>
             </motion.div>
 
-            <AnimatePresence>
-                {showMap && (
-                    <LocationPicker
-                        initialLabel={locationLabel}
-                        initialLat={locationLat}
-                        initialLng={locationLng}
-                        onSelect={(lat, lng, label) => {
-                            setLocationLat(lat);
-                            setLocationLng(lng);
-                            setLocationLabel(label);
-                            setShowMap(false);
-                        }}
-                        onClose={() => setShowMap(false)}
-                    />
-                )}
-            </AnimatePresence>
         </AnimatePresence>
     );
 }
