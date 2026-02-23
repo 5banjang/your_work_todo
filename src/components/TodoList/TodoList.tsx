@@ -50,7 +50,7 @@ function SortableTodoCard({ todo, onSettings }: { todo: Todo; onSettings?: (todo
 }
 
 export default function TodoList({ onSettings }: TodoListProps) {
-    const { todos, reorderTodos } = useTodos();
+    const { todos, reorderTodos, clearCompletedTodos } = useTodos();
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -87,18 +87,52 @@ export default function TodoList({ onSettings }: TodoListProps) {
 
             {doneTodos.length > 0 && (
                 <div style={{ marginTop: "var(--space-6)" }}>
-                    <p
-                        style={{
-                            fontSize: "var(--text-xs)",
-                            color: "var(--color-text-muted)",
-                            marginBottom: "var(--space-3)",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.1em",
-                            fontWeight: "var(--weight-semibold)",
-                        }}
-                    >
-                        완료됨 ({doneTodos.length})
-                    </p>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "var(--space-3)",
+                    }}>
+                        <p
+                            style={{
+                                fontSize: "var(--text-xs)",
+                                color: "var(--color-text-muted)",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em",
+                                fontWeight: "var(--weight-semibold)",
+                                margin: 0
+                            }}
+                        >
+                            완료됨 ({doneTodos.length})
+                        </p>
+                        <button
+                            onClick={() => {
+                                if (window.confirm("완료된 모든 항목을 영구적으로 삭제하시겠습니까?")) {
+                                    clearCompletedTodos();
+                                }
+                            }}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                color: "var(--color-text-danger, #ef4444)", /* Adjust color as needed */
+                                fontSize: "var(--text-xs)",
+                                cursor: "pointer",
+                                opacity: 0.8,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                padding: "0.25rem 0.5rem",
+                                borderRadius: "4px"
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.opacity = "1"}
+                            onMouseOut={(e) => e.currentTarget.style.opacity = "0.8"}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                            </svg>
+                            모두 지우기
+                        </button>
+                    </div>
                     {doneTodos.map((todo) => (
                         <TodoCard key={todo.id} todo={todo} />
                     ))}

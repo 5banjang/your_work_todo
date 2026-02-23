@@ -25,6 +25,7 @@ interface TodoContextType {
     deleteTodo: (id: string) => void;
     completeTodo: (id: string) => void;
     uncompleteTodo: (id: string) => void;
+    clearCompletedTodos: () => Promise<void>;
     reorderTodos: (activeId: string, overId: string) => void;
     moveTodoStatus: (id: string, status: TodoStatus) => void;
     fcmToken: string | null;
@@ -175,10 +176,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 const batch = writeBatch(db!);
                 // Prepend: we set this to 0, push all others by 1
                 todos.forEach(t => {
-                    const docRef = doc(db, "todos", t.id);
+                    const docRef = doc(db!, "todos", t.id);
                     batch.update(docRef, { order: t.order + 1, updatedAt: new Date() });
                 });
-                const newDocRef = doc(db, "todos", newId);
+                const newDocRef = doc(db!, "todos", newId);
                 batch.set(newDocRef, { ...baseTodo, order: 0 });
                 await batch.commit();
             } catch (err) {
@@ -268,6 +269,26 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const clearCompletedTodos = useCallback(async () => {
+        const completedTodos = todos.filter(t => t.status === "done");
+        if (completedTodos.length === 0) return;
+
+        if (isFirebaseConfigured() && db) {
+            try {
+                // Batch delete all done items (Firebase limits batches to 500 operations, usually safe for this)
+                const batch = writeBatch(db!);
+                completedTodos.forEach(t => {
+                    batch.delete(doc(db, "todos", t.id));
+                });
+                await batch.commit();
+            } catch (err) {
+                console.error("Error clearing completed todos:", err);
+            }
+        } else {
+            setTodos((prev) => prev.filter(t => t.status !== "done"));
+        }
+    }, [todos]);
+
     const reorderTodos = useCallback(async (activeId: string, overId: string) => {
         const oldIndex = todos.findIndex((t) => t.id === activeId);
         const newIndex = todos.findIndex((t) => t.id === overId);
@@ -282,7 +303,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             try {
                 const batch = writeBatch(db!);
                 mapped.forEach(t => {
-                    const docRef = doc(db, "todos", t.id);
+                    const docRef = doc(db!, "todos", t.id);
                     batch.update(docRef, { order: t.order, updatedAt: new Date() });
                 });
                 await batch.commit();
@@ -337,6 +358,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 deleteTodo,
                 completeTodo,
                 uncompleteTodo,
+                clearCompletedTodos,
                 reorderTodos,
                 moveTodoStatus,
                 fcmToken,

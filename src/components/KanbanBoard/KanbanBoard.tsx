@@ -14,7 +14,7 @@ const COLUMNS: { status: TodoStatus; label: string; color: string }[] = [
 ];
 
 export default function KanbanBoard() {
-    const { todos, moveTodoStatus } = useTodos();
+    const { todos, moveTodoStatus, clearCompletedTodos } = useTodos();
 
     const handleDrop = (e: React.DragEvent, status: TodoStatus) => {
         e.preventDefault();
@@ -49,9 +49,39 @@ export default function KanbanBoard() {
                         onDragLeave={handleDragLeave}
                     >
                         <div className={`${styles.columnHeader} ${styles[`header-${col.color}`]}`}>
-                            <span className={`${styles.columnDot} ${styles[`dot-${col.color}`]}`} />
-                            <span className={styles.columnLabel}>{col.label}</span>
-                            <span className={styles.columnCount}>{columnTodos.length}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className={`${styles.columnDot} ${styles[`dot-${col.color}`]}`} />
+                                <span className={styles.columnLabel}>{col.label}</span>
+                                <span className={styles.columnCount}>{columnTodos.length}</span>
+                            </div>
+
+                            {col.status === 'done' && columnTodos.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm("완료된 모든 항목을 영구적으로 삭제하시겠습니까?")) {
+                                            clearCompletedTodos();
+                                        }
+                                    }}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        color: "var(--color-text-danger, #ef4444)",
+                                        cursor: "pointer",
+                                        opacity: 0.8,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "4px",
+                                        borderRadius: "4px"
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.opacity = "1"}
+                                    onMouseOut={(e) => e.currentTarget.style.opacity = "0.8"}
+                                    title="완료 항목 모두 지우기"
+                                >
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
 
                         <div className={styles.columnBody}>
