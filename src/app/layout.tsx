@@ -3,6 +3,7 @@ import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import KakaoRedirect from "@/components/KakaoRedirect/KakaoRedirect";
 import GlobalNicknameCheck from "@/components/NicknameModal/GlobalNicknameCheck";
+import InstallPrompt from "@/components/InstallPrompt/InstallPrompt";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
@@ -67,6 +68,7 @@ export default function RootLayout({
           <ServiceWorkerRegistrar />
           <KakaoRedirect />
           <GlobalNicknameCheck />
+          <InstallPrompt />
           <div className="app-container">
             {children}
           </div>

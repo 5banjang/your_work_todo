@@ -1,0 +1,36 @@
+.installBtn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(45, 45, 55, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--font-primary), sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.installBtn:hover {
+    background: rgba(60, 60, 75, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.installBtn:active {
+    transform: translateY(0);
+}
+
+.installBtn svg {
+    color: var(--color-primary);
+}

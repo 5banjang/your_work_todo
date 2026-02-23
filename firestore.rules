@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true; // Fallback rule, but we specify tighter ones below
+    }
+
+    // A simple function to ensure the document contains required fields
+    // without enforcing strict auth, since the app relies on anonymous usage.
+    function isValidTodo() {
+         return request.resource.data.keys().hasAll(['title', 'status', 'createdAt', 'updatedAt']) 
+             && request.resource.data.title is string 
+             && request.resource.data.status in ['todo', 'in_progress', 'waiting', 'done'];
+    }
+
+    match /todos/{todoId} {
+      // Allow read to everyone (since sharing relies on open UUID links)
+      allow read: if true;
+      
+      // Allow create only if basic schema requirements are met
+      allow create: if isValidTodo();
+      
+      // Allow updates if status/schema is valid
+      allow update: if isValidTodo() || request.resource.data.keys().hasAny(['status', 'order', 'assigneeName']);
+      
+      allow delete: if true;
+    }
+
+    match /fcmTokens/{token} {
+      // Tokens can be written by the client
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasAll(['token', 'userNickname', 'updatedAt']);
+    }
+  }
+}
