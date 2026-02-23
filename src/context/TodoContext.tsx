@@ -350,7 +350,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 // Batch delete all done items (Firebase limits batches to 500 operations, usually safe for this)
                 const batch = writeBatch(db!);
                 completedTodos.forEach(t => {
-                    batch.delete(doc(db, "todos", t.id));
+                    batch.delete(doc(db!, "todos", t.id));
                 });
                 await batch.commit();
             } catch (err) {

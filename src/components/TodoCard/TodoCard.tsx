@@ -109,15 +109,7 @@ export default function TodoCard({ todo, dragHandleProps, onSettings }: TodoCard
                             ✓ {todo.checklist.filter((c) => c.completed).length}/{todo.checklist.length}
                         </span>
                     )}
-                    {todo.geoFence && (
-                        <span className={styles.locationBadge}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="11" height="11">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            위치
-                        </span>
-                    )}
+
                 </div>
 
                 <div className={styles.explicitActions}>
