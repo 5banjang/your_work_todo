@@ -103,7 +103,7 @@ export default function DelegationDashboard({ isOpen, onClose }: DelegationDashb
                             <div className={styles.taskList}>
                                 {groupedByAssignee[selectedAssignee]?.map(todo => (
                                     <div key={todo.id} className={styles.taskItemWrapper}>
-                                        <TodoCard todo={todo} />
+                                        <TodoCard todo={todo} readOnly={true} />
                                     </div>
                                 ))}
                             </div>
