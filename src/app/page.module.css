@@ -6,9 +6,8 @@
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  background: rgba(10, 14, 23, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--color-modal-bg);
+  border-bottom: var(--border-width-glass) solid var(--glass-border);
 }
 
 .headerLeft {
