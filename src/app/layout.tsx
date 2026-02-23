@@ -10,18 +10,20 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://your-to-do-10bd1.web.app"),
   title: "Your To-Do — 스마트 할 일 관리",
   description:
-    "AI 기반 스마트 입력, 마감 임박 시각화, 스와이프 제스처, 작업 위임까지. 당신의 완벽한 할 일 관리 파트너.",
+    "AI 기반 스마트 입력, 마감 임박 시각화, 작업 위임 & 실시간 진행 추적까지. 당신만의 완벽한 할 일 관리 파트너.",
+  keywords: ["할 일 관리", "투두리스트", "업무 위임", "To-Do", "할일 공유", "팀 관리", "PWA 앱"],
+  authors: [{ name: "Your To-Do Team" }],
   openGraph: {
-    title: "Your To-Do 📋 커스텀 투두 모아보기",
-    description: "진행 상황과 마감일을 한눈에 다같이. 카카오톡에서 바로 우리만의 투두 리스트를 확인하고 완료하세요!",
-    url: "https://your-to-do.com",
+    title: "📋 Your To-Do — 할 일을 함께 관리하세요",
+    description: "마감일 시각화, 일괄 지시, 실시간 진행 추적. 카톡으로 링크 하나 보내면 바로 시작!",
+    url: "https://your-to-do-10bd1.web.app",
     siteName: "Your To-Do",
     images: [
       {
-        url: "/images/og-share.jpg",
+        url: "/images/og-share.png",
         width: 1200,
         height: 630,
-        alt: "Your To-Do App Preview",
+        alt: "Your To-Do — 스마트 할 일 관리 앱 미리보기",
       },
     ],
     locale: "ko_KR",
@@ -29,9 +31,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Your To-Do 📋 커스텀 투두 모아보기",
-    description: "진행 상황과 마감일을 한눈에 다같이. 카카오톡에서 바로 우리만의 투두 리스트를 확인하고 완료하세요!",
-    images: ["/images/og-share.jpg"],
+    title: "📋 Your To-Do — 할 일을 함께 관리하세요",
+    description: "마감일 시각화, 일괄 지시, 실시간 진행 추적. 카톡으로 링크 하나 보내면 바로 시작!",
+    images: ["/images/og-share.png"],
   },
   manifest: "/manifest.json",
   appleWebApp: {
