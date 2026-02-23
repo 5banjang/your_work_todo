@@ -199,6 +199,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                     createdAt: new Date(t.createdAt),
                     updatedAt: new Date(t.updatedAt),
                     completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
+                    batchId: t.batchId,
                 }));
                 setTodos(restored);
             } else {
@@ -230,6 +231,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                         assigneeName: data.assigneeName,
                         createdBy: data.createdBy,
                         shareLink: data.shareLink,
+                        batchId: data.batchId,
                         checklist: data.checklist || [],
                         geoFence: data.geoFence,
                         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),

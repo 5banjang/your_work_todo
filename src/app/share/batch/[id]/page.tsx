@@ -49,21 +49,7 @@ function BatchShareContent() {
                     return;
                 }
 
-                // If user has a nickname, bind tasks to them if not already bound
-                if (myNickname) {
-                    const updatePromises = snapshot.docs.map(async (document) => {
-                        const data = document.data();
-                        // Only bind if it hasn't been assigned to someone else
-                        if (!data.assigneeName || data.assigneeName === myNickname) {
-                            if (data.assigneeName !== myNickname) {
-                                await updateDoc(doc(db as any, "todos", document.id), { assigneeName: myNickname });
-                            }
-                        }
-                    });
-                    await Promise.all(updatePromises);
-                }
-
-                // Now listen to real-time updates for these specific tasks
+                // 1. Setup real-time listener IMMEDIATELY so the UI renders and loading stops.
                 const unsubscribe = onSnapshot(q, (snap) => {
                     const fetchedTodos: Todo[] = [];
                     snap.forEach((document) => {
@@ -97,6 +83,21 @@ function BatchShareContent() {
                     setError(true);
                     setLoading(false);
                 });
+
+                // 2. Perform bindings in the background. Optimistic updates will trigger the snapshot.
+                if (myNickname) {
+                    const updatePromises = snapshot.docs.map(async (document) => {
+                        const data = document.data();
+                        // Only bind if it hasn't been assigned to someone else
+                        if (!data.assigneeName || data.assigneeName === myNickname) {
+                            if (data.assigneeName !== myNickname) {
+                                await updateDoc(doc(db as any, "todos", document.id), { assigneeName: myNickname }).catch(e => console.error(e));
+                            }
+                        }
+                    });
+                    // We don't need to await this to show the UI.
+                    Promise.all(updatePromises).catch(console.error);
+                }
 
                 return unsubscribe;
             } catch (err) {
