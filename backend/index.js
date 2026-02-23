@@ -43,12 +43,19 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
             });
 
             if (tokens.length > 0) {
-                const response = await admin.messaging().sendToDevice(tokens, payload);
+                const message = {
+                    notification: payload.notification,
+                    data: payload.data,
+                    tokens: tokens
+                };
+
+                const response = await admin.messaging().sendEachForMulticast(message);
+
                 // Cleanup invalid tokens
                 const tokensToRemove = [];
-                response.results.forEach((result, index) => {
-                    const error = result.error;
-                    if (error) {
+                response.responses.forEach((result, index) => {
+                    if (!result.success) {
+                        const error = result.error;
                         console.error("Failure sending notification to", tokens[index], error);
                         if (
                             error.code === "messaging/invalid-registration-token" ||
