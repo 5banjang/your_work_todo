@@ -57,8 +57,20 @@ export default function TodoList({ onSettings }: TodoListProps) {
         useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
     );
 
-    const activeTodos = todos.filter((t) => t.status !== "done");
-    const doneTodos = todos.filter((t) => t.status === "done");
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+
+    const myTodos = todos.filter((t) => {
+        // Enforce isolation: ensure the task belongs to or is assigned to me (or legacy "me" tasks).
+        const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
+        if (!involvesMe) return false;
+
+        // Filter out tasks I sent to others.
+        const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+        return !isDelegatedByMe;
+    });
+
+    const activeTodos = myTodos.filter((t) => t.status !== "done");
+    const doneTodos = myTodos.filter((t) => t.status === "done");
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;

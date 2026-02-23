@@ -12,10 +12,11 @@ import ShareListModal from "@/components/ShareListModal/ShareListModal";
 import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
 import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
 import GuideModal from "@/components/GuideModal/GuideModal";
+import DelegationDashboard from "@/components/DelegationDashboard/DelegationDashboard";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
-function Header({ onShareList }: { onShareList: () => void }) {
+function Header({ onShareList, onOpenDashboard }: { onShareList: () => void; onOpenDashboard: () => void }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -88,6 +89,19 @@ function Header({ onShareList }: { onShareList: () => void }) {
         </button>
         <button
           className={styles.shareListBtn}
+          onClick={onOpenDashboard}
+          type="button"
+          aria-label="지시 현황판"
+          title="지시 현황판 (보낸 일)"
+          style={{ marginLeft: 8 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+          </svg>
+        </button>
+        <button
+          className={styles.shareListBtn}
           onClick={onShareList}
           type="button"
           aria-label="리스트 공유"
@@ -132,6 +146,7 @@ function MainContent() {
   const [settingsTodo, setSettingsTodo] = useState<Todo | null>(null);
   const [showShareList, setShowShareList] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
     setSettingsTodo(todo);
@@ -143,7 +158,7 @@ function MainContent() {
 
   return (
     <>
-      <Header onShareList={() => setShowShareList(true)} />
+      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} />
       <main className="app-content">
         {viewMode === "list" && <SmartInput />}
 
@@ -188,6 +203,8 @@ function MainContent() {
           <ShareListModal onClose={() => setShowShareList(false)} />
         )}
       </AnimatePresence>
+
+      <DelegationDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} />
 
       {/* App Guide */}
       <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />

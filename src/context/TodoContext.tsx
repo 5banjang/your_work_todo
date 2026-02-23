@@ -260,13 +260,15 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const addTodo = useCallback(async (title: string, deadline: Date | null) => {
         const now = new Date();
         const newId = generateId();
+        const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+
         const baseTodo = {
             title,
             status: "todo",
             order: 0,
             deadline,
             remindAt: null,
-            createdBy: "me",
+            createdBy: myNickname,
             checklist: [],
             createdAt: now,
             updatedAt: now,
@@ -373,7 +375,14 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const clearCompletedTodos = useCallback(async () => {
-        const completedTodos = todos.filter(t => t.status === "done");
+        const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+        const completedTodos = todos.filter(t => {
+            if (t.status !== "done") return false;
+            const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
+            if (!involvesMe) return false;
+            const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+            return !isDelegatedByMe;
+        });
         if (completedTodos.length === 0) return;
 
         if (isFirebaseConfigured() && db) {

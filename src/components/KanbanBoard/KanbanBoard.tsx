@@ -16,6 +16,15 @@ const COLUMNS: { status: TodoStatus; label: string; color: string }[] = [
 export default function KanbanBoard() {
     const { todos, moveTodoStatus, clearCompletedTodos } = useTodos();
 
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+    const myTodos = todos.filter((t) => {
+        const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
+        if (!involvesMe) return false;
+
+        const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+        return !isDelegatedByMe;
+    });
+
     const handleDrop = (e: React.DragEvent, status: TodoStatus) => {
         e.preventDefault();
         const todoId = e.dataTransfer.getData("text/plain");
@@ -39,7 +48,7 @@ export default function KanbanBoard() {
     return (
         <div className={styles.board}>
             {COLUMNS.map((col) => {
-                const columnTodos = todos.filter((t) => t.status === col.status);
+                const columnTodos = myTodos.filter((t) => t.status === col.status);
                 return (
                     <div
                         key={col.status}

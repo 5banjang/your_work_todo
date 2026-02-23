@@ -19,6 +19,7 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
     const initDate = todo.deadline ? new Date(todo.deadline) : new Date();
 
     const [targetYear, setTargetYear] = useState(initDate.getFullYear().toString());
+    const [assigneeName, setAssigneeName] = useState(todo.assigneeName || "");
     const [targetMonth, setTargetMonth] = useState((initDate.getMonth() + 1).toString().padStart(2, "0"));
     const [targetDate, setTargetDate] = useState(initDate.getDate().toString().padStart(2, "0"));
     const initHour = initDate.getHours();
@@ -56,7 +57,7 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
         }
 
         updateTodo(todo.id, {
-            assigneeName: undefined,
+            assigneeName: assigneeName.trim() || undefined,
             checklist: [],
             deadline: deadlineDate,
             remindAt,
@@ -123,6 +124,24 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
 
                     {/* Scrollable content */}
                     <div className={styles.scrollContent}>
+                        {/* Target Assignee (Recipient) */}
+                        <div className={styles.field}>
+                            <label className={styles.label}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                받는 사람 (지시 대상)
+                            </label>
+                            <input
+                                type="text"
+                                value={assigneeName}
+                                onChange={(e) => setAssigneeName(e.target.value)}
+                                placeholder="이름을 입력하면 내 목록에서 숨겨집니다"
+                                className={styles.input}
+                            />
+                        </div>
+
                         {/* Deadline */}
                         <div className={styles.field}>
                             <label className={styles.label}>
