@@ -1,6 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
+import { getMessaging, type Messaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
@@ -22,6 +23,16 @@ const app = getFirebaseApp();
 
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const auth: Auth | null = app ? getAuth(app) : null;
+
+let _messaging: Messaging | null = null;
+if (typeof window !== "undefined" && app) {
+    isSupported().then((supported) => {
+        if (supported) {
+            _messaging = getMessaging(app);
+        }
+    });
+}
+export const messaging = () => _messaging;
 
 /**
  * Check if Firebase is configured.

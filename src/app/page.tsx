@@ -15,14 +15,18 @@ import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
 function Header({ onShareList }: { onShareList: () => void }) {
-  const { viewMode } = useTodos();
+  const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [permGranted, setPermGranted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") {
       setTheme("light");
       document.documentElement.setAttribute("data-theme", "light");
+    }
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermGranted(Notification.permission === "granted");
     }
   }, []);
 
@@ -31,6 +35,13 @@ function Header({ onShareList }: { onShareList: () => void }) {
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
+  };
+
+  const handlePushReq = async () => {
+    await requestPushPermission();
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermGranted(Notification.permission === "granted");
+    }
   };
 
   return (
@@ -47,10 +58,30 @@ function Header({ onShareList }: { onShareList: () => void }) {
       <div className={styles.headerRight}>
         <button
           className={styles.shareListBtn}
+          onClick={handlePushReq}
+          type="button"
+          aria-label="알림 설정"
+          title="푸시 알림 켜기"
+        >
+          {permGranted || fcmToken ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="#00f5ff" strokeWidth="2" width="18" height="18">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          )}
+        </button>
+        <button
+          className={styles.shareListBtn}
           onClick={onShareList}
           type="button"
           aria-label="리스트 공유"
           title="전체 리스트 공유"
+          style={{ marginLeft: 8 }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" />

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Todo, TodoStatus } from "@/types/todo";
 import { generateId } from "@/lib/utils";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
+import { db, isFirebaseConfigured, messaging } from "@/lib/firebase";
 import {
     collection,
     doc,
@@ -14,6 +14,7 @@ import {
     writeBatch,
     deleteField
 } from "firebase/firestore";
+import { getToken, onMessage } from "firebase/messaging";
 
 interface TodoContextType {
     todos: Todo[];
@@ -26,6 +27,8 @@ interface TodoContextType {
     uncompleteTodo: (id: string) => void;
     reorderTodos: (activeId: string, overId: string) => void;
     moveTodoStatus: (id: string, status: TodoStatus) => void;
+    fcmToken: string | null;
+    requestPushPermission: () => Promise<void>;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -38,6 +41,49 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
     const [isLoaded, setIsLoaded] = useState(false);
+    const [fcmToken, setFcmToken] = useState<string | null>(null);
+
+    const requestPushPermission = async () => {
+        if (!("Notification" in window)) return;
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                const msg = messaging();
+                if (msg) {
+                    const reg = await navigator.serviceWorker.ready;
+                    const token = await getToken(msg, {
+                        serviceWorkerRegistration: reg,
+                        vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY
+                    });
+                    console.log("FCM Token received:", token);
+                    setFcmToken(token);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to get push permission:", err);
+        }
+    };
+
+    // Listen for foreground push messages
+    useEffect(() => {
+        const msg = messaging();
+        if (!msg) return;
+
+        const unsubscribe = onMessage(msg, (payload) => {
+            console.log("Foreground push received:", payload);
+            const title = payload.notification?.title || "알림";
+            const options = {
+                body: payload.notification?.body || "새 알림이 도착했습니다.",
+                icon: "/icons/icon-192.png",
+                vibrate: [200, 100, 200]
+            };
+            if (Notification.permission === "granted") {
+                new Notification(title, options);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const loadLocal = useCallback(() => {
         try {
@@ -126,7 +172,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
         if (isFirebaseConfigured() && db) {
             try {
-                const batch = writeBatch(db);
+                const batch = writeBatch(db!);
                 // Prepend: we set this to 0, push all others by 1
                 todos.forEach(t => {
                     const docRef = doc(db, "todos", t.id);
@@ -234,7 +280,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
         if (isFirebaseConfigured() && db) {
             try {
-                const batch = writeBatch(db);
+                const batch = writeBatch(db!);
                 mapped.forEach(t => {
                     const docRef = doc(db, "todos", t.id);
                     batch.update(docRef, { order: t.order, updatedAt: new Date() });
@@ -293,6 +339,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 uncompleteTodo,
                 reorderTodos,
                 moveTodoStatus,
+                fcmToken,
+                requestPushPermission,
             }}
         >
             {children}

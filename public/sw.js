@@ -51,17 +51,27 @@ self.addEventListener("fetch", (event) => {
     );
 });
 
-// Push notifications (for future geofence alerts)
+// Push notifications (for FCM & future geofence alerts)
 self.addEventListener("push", (event) => {
-    const data = event.data ? event.data.json() : {};
-    const title = data.title || "Your To-Do";
+    let data = {};
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch (e) {
+        console.error("Push data parsing failed", e);
+    }
+
+    // Support both direct data payloads and FCM notification object
+    const title = data.notification?.title || data.title || "Your To-Do";
+    const body = data.notification?.body || data.body || "새로운 알림이 있습니다";
+
     const options = {
-        body: data.body || "새로운 알림이 있습니다",
+        body: body,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
-        vibrate: [100, 50, 100],
-        data: { url: data.url || "/" },
+        vibrate: [200, 100, 200, 100, 200], // Stronger vibration pattern
+        data: { url: data.data?.url || data.url || "/" },
     };
+
     event.waitUntil(self.registration.showNotification(title, options));
 });
 
@@ -74,7 +84,9 @@ self.addEventListener("notificationclick", (event) => {
             for (const client of clients) {
                 if (client.url === url && "focus" in client) return client.focus();
             }
-            return self.clients.openWindow(url);
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(url);
+            }
         })
     );
 });
