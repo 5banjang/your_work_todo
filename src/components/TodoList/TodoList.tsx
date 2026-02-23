@@ -64,9 +64,11 @@ export default function TodoList({ onSettings }: TodoListProps) {
         const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
         if (!involvesMe) return false;
 
-        // Filter out tasks I sent to others.
-        const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
-        return !isDelegatedByMe;
+        // Filter out tasks I sent out: if I created it AND it has a batchId (shared via link)
+        const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+        const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+
+        return !sentOutbox && !manuallyDelegated;
     });
 
     const activeTodos = myTodos.filter((t) => t.status !== "done");

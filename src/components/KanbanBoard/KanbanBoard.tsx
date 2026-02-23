@@ -21,8 +21,10 @@ export default function KanbanBoard() {
         const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
         if (!involvesMe) return false;
 
-        const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
-        return !isDelegatedByMe;
+        const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+        const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+
+        return !sentOutbox && !manuallyDelegated;
     });
 
     const handleDrop = (e: React.DragEvent, status: TodoStatus) => {

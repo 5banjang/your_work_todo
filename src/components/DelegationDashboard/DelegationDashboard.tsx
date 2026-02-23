@@ -16,12 +16,12 @@ export default function DelegationDashboard({ isOpen, onClose }: DelegationDashb
     const { todos } = useTodos();
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
-    // Get all tasks that I have delegated to others
-    const myDelegatedTasks = todos.filter(t => t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname);
+    // Get all tasks that I have delegated to others, OR shared via batch link
+    const myDelegatedTasks = todos.filter(t => t.createdBy === myNickname && (t.batchId || (t.assigneeName && t.assigneeName !== myNickname)));
 
     // Group by assignee name
     const groupedByAssignee = myDelegatedTasks.reduce((acc, t) => {
-        const name = t.assigneeName!;
+        const name = t.assigneeName || "⏳ 수신 대기중 (미확인)";
         if (!acc[name]) acc[name] = [];
         acc[name].push(t);
         return acc;
@@ -75,8 +75,8 @@ export default function DelegationDashboard({ isOpen, onClose }: DelegationDashb
                             assignees.length === 0 ? (
                                 <div className={styles.emptyState}>
                                     <div className={styles.emptyIcon}>📬</div>
-                                    <p>아직 다른 사람에게 위임한 할 일이 없습니다.</p>
-                                    <small>할 일 설정에서 '받는 사람'을 지정하여 전송해보세요.</small>
+                                    <p>아직 다른 사람에게 전달한 할 일이 없습니다.</p>
+                                    <small>메인 리스트에서 여러 항목을 체크한 뒤 [공유하기]를 눌러 링크를 전달해보세요.</small>
                                 </div>
                             ) : (
                                 <div className={styles.assigneeGrid}>
