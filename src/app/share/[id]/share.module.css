@@ -122,3 +122,68 @@
     color: #94a3b8;
     text-align: center;
 }
+
+.headerRight {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.bellBtn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.bellBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bellBtnActive {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.bellBtnActive:hover {
+    background: rgba(0, 245, 255, 0.1);
+}
+
+.homeLinkContainer {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.createOwnBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.createOwnBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}

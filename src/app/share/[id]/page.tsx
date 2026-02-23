@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { db } from "@/lib/firebase";
+import Link from "next/link";
+import { db, messaging } from "@/lib/firebase";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { getToken } from "firebase/messaging";
 import type { Todo } from "@/types/todo";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -18,6 +20,37 @@ export default function SharePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [updating, setUpdating] = useState(false);
+
+    // Notifications State
+    const [fcmToken, setFcmToken] = useState<string | null>(null);
+    const [permGranted, setPermGranted] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== "undefined" && "Notification" in window) {
+            setPermGranted(Notification.permission === "granted");
+        }
+    }, []);
+
+    const requestPushPermission = async () => {
+        if (!("Notification" in window)) return;
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                const msg = messaging();
+                if (msg) {
+                    const reg = await navigator.serviceWorker.ready;
+                    const token = await getToken(msg, {
+                        serviceWorkerRegistration: reg,
+                        vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY
+                    });
+                    setFcmToken(token);
+                    setPermGranted(true);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to get push permission:", err);
+        }
+    };
 
     useEffect(() => {
         if (!db) {
@@ -97,8 +130,32 @@ export default function SharePage() {
                 transition={{ duration: 0.4 }}
             >
                 <div className={styles.header}>
-                    <span className={styles.icon}>📋</span>
-                    <h1 className={styles.title}>{todo.title}</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span className={styles.icon}>📋</span>
+                        <h1 className={styles.title}>{todo.title}</h1>
+                    </div>
+
+                    <div className={styles.headerRight}>
+                        <button
+                            className={permGranted || fcmToken ? styles.bellBtnActive : styles.bellBtn}
+                            onClick={requestPushPermission}
+                            type="button"
+                            aria-label="알림 설정"
+                            title="푸시 알림 켜기"
+                        >
+                            {permGranted || fcmToken ? (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#00f5ff" strokeWidth="2" width="20" height="20">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                </svg>
+                            ) : (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <div className={styles.infoBox}>
@@ -134,6 +191,12 @@ export default function SharePage() {
                             {updating ? "처리 중..." : "✓ 완료 처리하기"}
                         </button>
                     )}
+                </div>
+
+                <div className={styles.homeLinkContainer}>
+                    <Link href="/" className={styles.createOwnBtn}>
+                        ✨ 나만의 할 일 만들기
+                    </Link>
                 </div>
             </motion.div>
         </div>
