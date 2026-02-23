@@ -15,12 +15,26 @@ interface ShareListModalProps {
 export default function ShareListModal({ onClose }: ShareListModalProps) {
     const { todos, updateTodo } = useTodos();
     const [copied, setCopied] = useState(false);
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+
+    const myTodos = useMemo(() => {
+        return todos.filter((t) => {
+            const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
+            if (!involvesMe) return false;
+
+            const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+            const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+
+            return !sentOutbox && !manuallyDelegated;
+        });
+    }, [todos, myNickname]);
+
     const [selectedIds, setSelectedIds] = useState<Set<string>>(
-        new Set(todos.filter((t) => t.status !== "done").map((t) => t.id))
+        new Set(myTodos.filter((t) => t.status !== "done").map((t) => t.id))
     );
 
-    const activeTodos = todos.filter((t) => t.status !== "done");
-    const doneTodos = todos.filter((t) => t.status === "done");
+    const activeTodos = myTodos.filter((t) => t.status !== "done");
+    const doneTodos = myTodos.filter((t) => t.status === "done");
 
     const toggleSelect = useCallback((id: string) => {
         setSelectedIds((prev) => {
@@ -32,18 +46,18 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
     }, []);
 
     const toggleAll = useCallback(() => {
-        if (selectedIds.size === todos.length) {
+        if (selectedIds.size === myTodos.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(todos.map((t) => t.id)));
+            setSelectedIds(new Set(myTodos.map((t) => t.id)));
         }
-    }, [selectedIds.size, todos]);
+    }, [selectedIds.size, myTodos]);
 
     const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
 
     // Generate shareable link and text
     const shareText = useMemo(() => {
-        const selected = todos.filter((t) => selectedIds.has(t.id));
+        const selected = myTodos.filter((t) => selectedIds.has(t.id));
         if (selected.length === 0) return "";
 
         // Use a consistent batchId while the modal is open to prevent changing the link
