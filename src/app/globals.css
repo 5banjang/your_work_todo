@@ -5,6 +5,8 @@
 /* ---------- Google Fonts ---------- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
 
 /* ---------- CSS Custom Properties (Design Tokens) ---------- */
 :root {
@@ -15,6 +17,11 @@
   --color-bg-glass: rgba(255, 255, 255, 0.04);
   --color-bg-glass-hover: rgba(255, 255, 255, 0.08);
   --color-bg-input: rgba(255, 255, 255, 0.06);
+  --color-modal-bg: linear-gradient(180deg, #1a2332 0%, #111827 100%);
+
+  /* --- Structural Tokens --- */
+  --border-width-glass: 1px;
+  --border-width-card: 1.5px;
 
   /* --- Glass Effect --- */
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -356,6 +363,8 @@ img {
   --color-text-secondary: #475569;
   --color-text-muted: #64748b;
   --color-text-inverse: #ffffff;
+
+  --color-modal-bg: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
 }
 
 :root[data-theme="light"] body::before {
@@ -367,18 +376,24 @@ img {
 
 /* ---------- Kids Theme (Playful & Bright) ---------- */
 :root[data-theme="kids"] {
+  --font-primary: 'Jua', 'Noto Sans KR', sans-serif;
   --color-bg-primary: #fffbeb;
   /* Light yellow background */
   --color-bg-secondary: #fef3c7;
-  --color-bg-card: rgba(255, 255, 255, 0.85);
-  --color-bg-glass: rgba(255, 255, 255, 0.75);
-  --color-bg-glass-hover: rgba(255, 255, 255, 0.95);
-  --color-bg-input: rgba(251, 191, 36, 0.15);
-  /* Amber tint */
+  --color-bg-card: #ffffff;
+  --color-bg-glass: #ffffff;
+  --color-bg-glass-hover: #fef3c7;
+  --color-bg-input: #fef3c7;
+  --color-modal-bg: #fffbeb;
 
-  --glass-border: rgba(245, 158, 11, 0.2);
-  --glass-border-hover: rgba(245, 158, 11, 0.4);
-  --glass-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+  --glass-border: #f59e0b;
+  --glass-border-hover: #ea580c;
+
+  /* Neo-brutalism solid shadows */
+  --glass-shadow: 4px 4px 0px rgba(234, 88, 12, 0.4);
+  --glass-blur: none;
+  --border-width-glass: 3px;
+  --border-width-card: 3px;
 
   --color-text-primary: #451a03;
   /* Very dark brown/amber */
@@ -390,16 +405,14 @@ img {
   --color-accent-cyan: #3b82f6;
   /* Blue accent instead of cyan */
   --color-accent-cyan-glow: rgba(59, 130, 246, 0.4);
-  --color-accent-blue: #f59e0b;
-  /* Amber/Orange accent */
-  --color-accent-blue-glow: rgba(245, 158, 11, 0.4);
+  --color-accent-blue: #ea580c;
+  /* Orange accent */
+  --color-accent-blue-glow: rgba(234, 88, 12, 0.4);
 
   --color-safe: #10b981;
-  /* Brighter green */
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-info: #6366f1;
-  /* Indigo */
 
   /* Extra rounded corners */
   --radius-sm: 12px;
@@ -410,45 +423,48 @@ img {
 
 :root[data-theme="kids"] body::before {
   background:
-    radial-gradient(ellipse 500px 400px at 20% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 500px at 80% 100%, rgba(245, 158, 11, 0.15) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    radial-gradient(ellipse 400px 300px at 20% 10%, rgba(59, 130, 246, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at 80% 90%, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
 }
 
 /* ---------- Family Theme (Warm & Pastel) ---------- */
 :root[data-theme="family"] {
-  --color-bg-primary: #fafaf9;
-  /* Warm stone */
-  --color-bg-secondary: #f5f5f4;
-  --color-bg-card: rgba(255, 255, 255, 0.8);
-  --color-bg-glass: rgba(255, 255, 255, 0.65);
-  --color-bg-glass-hover: rgba(255, 255, 255, 0.85);
-  --color-bg-input: rgba(120, 113, 108, 0.08);
+  --font-primary: 'Gowun Dodum', 'Noto Sans KR', serif;
+  --color-bg-primary: #fdfbf7;
+  /* Warm soft paper */
+  --color-bg-secondary: #f4eee6;
+  --color-bg-card: rgba(255, 255, 255, 0.9);
+  --color-bg-glass: rgba(255, 255, 255, 0.7);
+  --color-bg-glass-hover: rgba(255, 255, 255, 0.9);
+  --color-bg-input: rgba(140, 130, 115, 0.08);
+  --color-modal-bg: #fdfbf7;
 
-  --glass-border: rgba(120, 113, 108, 0.15);
-  --glass-border-hover: rgba(120, 113, 108, 0.3);
-  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  --glass-border: rgba(140, 130, 115, 0.2);
+  --glass-border-hover: rgba(140, 130, 115, 0.4);
+  --glass-shadow: 0 4px 20px rgba(140, 130, 115, 0.08);
+  --border-width-glass: 1px;
+  --border-width-card: 1px;
 
-  --color-text-primary: #1c1917;
-  /* Dark stone */
-  --color-text-secondary: #57534e;
-  --color-text-muted: #a8a29e;
+  --color-text-primary: #3f3933;
+  /* Dark earthy brown */
+  --color-text-secondary: #70675f;
+  --color-text-muted: #a69d95;
   --color-text-inverse: #ffffff;
 
   /* Warm accents */
   --color-accent-cyan: #14b8a6;
-  /* Teal */
-  --color-accent-cyan-glow: rgba(20, 184, 166, 0.25);
-  --color-accent-blue: #f43f5e;
-  /* Rose */
-  --color-accent-blue-glow: rgba(244, 63, 94, 0.25);
+  /* Soft Teal */
+  --color-accent-cyan-glow: rgba(20, 184, 166, 0.2);
+  --color-accent-blue: #e17055;
+  /* Soft Rose/Coral */
+  --color-accent-blue-glow: rgba(225, 112, 85, 0.2);
 
-  --color-safe: #10b981;
-  --color-warning: #eab308;
-  --color-danger: #f43f5e;
-  --color-info: #8b5cf6;
+  --color-safe: #2ecc71;
+  --color-warning: #f1c40f;
+  --color-danger: #e74c3c;
+  --color-info: #9b59b6;
 
-  /* Softer corners */
+  /* Softer corners overall */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -457,7 +473,6 @@ img {
 
 :root[data-theme="family"] body::before {
   background:
-    radial-gradient(ellipse 500px 400px at 0% 0%, rgba(20, 184, 166, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 500px at 100% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
+    radial-gradient(ellipse 500px 400px at 10% 10%, rgba(20, 184, 166, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at 90% 90%, rgba(225, 112, 85, 0.05) 0%, transparent 70%);
 }
