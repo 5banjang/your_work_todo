@@ -32,80 +32,7 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 const STORAGE_KEY = "your-todo-data";
 
-// Sample data for initial load
-function getSampleTodos(): Todo[] {
-    const now = new Date();
-    return [
-        {
-            id: generateId(),
-            title: "유튜브 썸네일 제작",
-            status: "todo",
-            order: 0,
-            deadline: new Date(now.getTime() + 2 * 60 * 60 * 1000), // 2hrs
-            remindAt: new Date(now.getTime() + 1.5 * 60 * 60 * 1000),
-            createdBy: "me",
-            checklist: [],
-            createdAt: now,
-            updatedAt: now,
-        },
-        {
-            id: generateId(),
-            title: "클라이언트 미팅 자료 준비",
-            status: "todo",
-            order: 1,
-            deadline: new Date(now.getTime() + 5 * 60 * 60 * 1000), // 5hrs
-            remindAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
-            createdBy: "me",
-            checklist: [
-                { id: "c1", text: "발표 자료 최종 검토", completed: false },
-                { id: "c2", text: "프린트 준비", completed: true },
-            ],
-            createdAt: now,
-            updatedAt: now,
-        },
-        {
-            id: generateId(),
-            title: "광고법 위반 검수",
-            description: "광고 영상 촬영 장소 방문",
-            status: "in_progress",
-            order: 2,
-            deadline: new Date(now.getTime() + 48 * 60 * 60 * 1000), // 2days
-            remindAt: null,
-            createdBy: "me",
-            assigneeName: "김대리",
-            checklist: [{ id: "c3", text: "광고법 위반 검수 필수", completed: false }],
-            geoFence: { lat: 37.5665, lng: 126.978, radius: 100, label: "촬영 장소" },
-            createdAt: now,
-            updatedAt: now,
-        },
-        {
-            id: generateId(),
-            title: "디자인 리뷰 미팅",
-            status: "waiting",
-            order: 3,
-            deadline: new Date(now.getTime() + 0.5 * 60 * 60 * 1000), // 30min
-            remindAt: null,
-            createdBy: "me",
-            assigneeName: "박팀장",
-            checklist: [],
-            createdAt: now,
-            updatedAt: now,
-        },
-        {
-            id: generateId(),
-            title: "주간 보고서 제출",
-            status: "done",
-            order: 4,
-            deadline: null,
-            remindAt: null,
-            createdBy: "me",
-            checklist: [],
-            createdAt: now,
-            updatedAt: now,
-            completedAt: now,
-        },
-    ];
-}
+
 
 export function TodoProvider({ children }: { children: ReactNode }) {
     const [todos, setTodos] = useState<Todo[]>([]);
@@ -127,10 +54,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 }));
                 setTodos(restored);
             } else {
-                setTodos(getSampleTodos());
+                setTodos([]);
             }
         } catch {
-            setTodos(getSampleTodos());
+            setTodos([]);
         }
         setIsLoaded(true);
     }, []);
