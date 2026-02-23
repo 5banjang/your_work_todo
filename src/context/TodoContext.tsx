@@ -103,7 +103,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             if (permission === "granted") {
                 const msg = messaging();
                 if (msg) {
-                    const reg = await navigator.serviceWorker.ready;
+                    let reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+                    if (!reg) {
+                        reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+                    }
                     const token = await getToken(msg, {
                         serviceWorkerRegistration: reg,
                         vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY

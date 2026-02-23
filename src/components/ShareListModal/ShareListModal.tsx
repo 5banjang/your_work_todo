@@ -39,44 +39,20 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         }
     }, [selectedIds.size, todos]);
 
-    // Generate shareable text
+    // Generate shareable link and text
     const shareText = useMemo(() => {
         const selected = todos.filter((t) => selectedIds.has(t.id));
         if (selected.length === 0) return "";
 
+        const ids = selected.map(t => t.id).join(",");
+        const shareUrl = `${window.location.origin}/share/multi?ids=${ids}`;
+
         const lines: string[] = [];
-        lines.push("📋 할 일 리스트");
-        lines.push(`(${format(new Date(), "yyyy년 M월 d일 (EEE)", { locale: ko })})`);
+        lines.push("📋 할 일 리스트 공유");
+        lines.push(`총 ${selected.length}건 (진행 중 ${selected.filter(t => t.status !== "done").length}건)`);
         lines.push("");
-
-        const activeSelected = selected.filter((t) => t.status !== "done");
-        const doneSelected = selected.filter((t) => t.status === "done");
-
-        if (activeSelected.length > 0) {
-            lines.push("▸ 진행 중");
-            activeSelected.forEach((t, i) => {
-                let line = `  ${i + 1}. ${t.title}`;
-                if (t.deadline) {
-                    line += ` — ${format(t.deadline, "M/d(EEE) a h:mm", { locale: ko })}`;
-                }
-                if (t.assigneeName) {
-                    line += ` 👤${t.assigneeName}`;
-                }
-                lines.push(line);
-                lines.push(`     🔗 ${window.location.origin}/share/${t.id}`);
-            });
-            lines.push("");
-        }
-
-        if (doneSelected.length > 0) {
-            lines.push("✅ 완료");
-            doneSelected.forEach((t, i) => {
-                lines.push(`  ${i + 1}. ~~${t.title}~~`);
-            });
-        }
-
-        lines.push("");
-        lines.push(`총 ${selected.length}건 (완료 ${doneSelected.length}건)`);
+        lines.push("👉 링크에서 모두 확인 및 완료하기:");
+        lines.push(shareUrl);
 
         return lines.join("\n");
     }, [todos, selectedIds]);

@@ -20,6 +20,7 @@ export default function SharePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [updating, setUpdating] = useState(false);
+    const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
     // Notifications State
     const [fcmToken, setFcmToken] = useState<string | null>(null);
@@ -38,7 +39,10 @@ export default function SharePage() {
             if (permission === "granted") {
                 const msg = messaging();
                 if (msg) {
-                    const reg = await navigator.serviceWorker.ready;
+                    let reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+                    if (!reg) {
+                        reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+                    }
                     const token = await getToken(msg, {
                         serviceWorkerRegistration: reg,
                         vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY
@@ -85,6 +89,38 @@ export default function SharePage() {
 
         return () => unsubscribe();
     }, [id]);
+
+    useEffect(() => {
+        if (!todo?.deadline || todo.status === "done") {
+            setTimeLeft(null);
+            return;
+        }
+
+        const calculateTimeLeft = () => {
+            const now = new Date().getTime();
+            const distance = todo.deadline!.getTime() - now;
+
+            if (distance < 0) {
+                return "기한 만료";
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            if (days > 0) return `${days}일 ${hours}시간 남음`;
+            if (hours > 0) return `${hours}시간 ${minutes}분 남음`;
+            return `${minutes}분 ${seconds}초 남음`;
+        };
+
+        setTimeLeft(calculateTimeLeft());
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [todo?.deadline, todo?.status]);
 
     const handleComplete = async () => {
         if (!db || !todo) return;
@@ -161,9 +197,16 @@ export default function SharePage() {
                 <div className={styles.infoBox}>
                     <div className={styles.infoRow}>
                         <span className={styles.label}>마감일</span>
-                        <span className={styles.value}>
-                            {todo.deadline ? format(todo.deadline, "yyyy년 M월 d일 (EEE) a h:mm", { locale: ko }) : "지정 안 됨"}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            <span className={styles.value}>
+                                {todo.deadline ? format(todo.deadline, "yyyy년 M월 d일 (EEE) a h:mm", { locale: ko }) : "지정 안 됨"}
+                            </span>
+                            {timeLeft && (
+                                <span style={{ fontSize: '0.85rem', color: timeLeft === '기한 만료' ? '#ff4d4f' : 'var(--color-accent-cyan)', fontWeight: 600 }}>
+                                    ⏳ {timeLeft}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     {todo.assigneeName && (
                         <div className={styles.infoRow}>
