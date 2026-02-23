@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import KakaoRedirect from "@/components/KakaoRedirect/KakaoRedirect";
+import GlobalNicknameCheck from "@/components/NicknameModal/GlobalNicknameCheck";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
@@ -63,6 +65,8 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ServiceWorkerRegistrar />
+          <KakaoRedirect />
+          <GlobalNicknameCheck />
           <div className="app-container">
             {children}
           </div>

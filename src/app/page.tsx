@@ -11,6 +11,7 @@ import ShareModal from "@/components/ShareModal/ShareModal";
 import ShareListModal from "@/components/ShareListModal/ShareListModal";
 import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
 import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
+import GuideModal from "@/components/GuideModal/GuideModal";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
@@ -130,6 +131,7 @@ function MainContent() {
   const { viewMode, todos } = useTodos();
   const [settingsTodo, setSettingsTodo] = useState<Todo | null>(null);
   const [showShareList, setShowShareList] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
     setSettingsTodo(todo);
@@ -171,7 +173,7 @@ function MainContent() {
 
       </main>
 
-      <BottomNav />
+      <BottomNav onGuideClick={() => setShowGuide(true)} />
 
       {/* Individual todo settings */}
       <AnimatePresence>
@@ -187,6 +189,8 @@ function MainContent() {
         )}
       </AnimatePresence>
 
+      {/* App Guide */}
+      <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
     </>
   );
 }

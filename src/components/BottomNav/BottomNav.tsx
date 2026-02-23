@@ -4,7 +4,11 @@ import React from "react";
 import { useTodos } from "@/context/TodoContext";
 import styles from "./BottomNav.module.css";
 
-export default function BottomNav() {
+interface BottomNavProps {
+    onGuideClick: () => void;
+}
+
+export default function BottomNav({ onGuideClick }: BottomNavProps) {
     const { viewMode, setViewMode } = useTodos();
 
     return (
@@ -36,20 +40,13 @@ export default function BottomNav() {
                 <span>보드</span>
             </button>
 
-            <button className={styles.tab} type="button" aria-label="캘린더" onClick={() => alert("캘린더 기능은 추후 업데이트 될 예정입니다! 🚀")}>
+            <button className={styles.tab} type="button" aria-label="사용 가이드" onClick={onGuideClick}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
-                <span>캘린더</span>
-            </button>
-
-            <button className={styles.tab} type="button" aria-label="설정" onClick={() => alert("전체 설정 기능은 추후 업데이트 될 예정입니다! 🚀")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
-                </svg>
-                <span>설정</span>
+                <span>사용법</span>
             </button>
         </nav>
     );
