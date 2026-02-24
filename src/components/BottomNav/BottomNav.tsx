@@ -49,7 +49,7 @@ export default function BottomNav({ onGuideClick }: BottomNavProps) {
                 <span>사용법</span>
             </button>
             <span style={{ position: "absolute", bottom: "4px", left: "8px", fontSize: "9px", color: "rgba(255,255,255,0.2)" }}>
-                v1.0.2
+                v1.0.3
             </span>
         </nav>
     );
