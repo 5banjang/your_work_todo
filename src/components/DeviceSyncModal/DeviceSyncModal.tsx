@@ -17,7 +17,8 @@ interface DeviceSyncModalProps {
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const [tab, setTab] = useState<"show" | "scan">("show");
     const [token, setToken] = useState<string>("");
-    const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+    const [status, setStatus] = useState<"idle" | "awaiting_choice" | "success" | "error">("idle");
+    const [scannedToken, setScannedToken] = useState<string | null>(null);
     const currentSyncId = getSyncId();
 
     // For "show" tab (PC)
@@ -34,11 +35,15 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
         const unsubscribe = onSnapshot(docRef, (snap) => {
             const data = snap.data();
             if (data && data.status === "completed" && data.syncId) {
-                setSyncId(data.syncId);
+                // If the mobile device sent a different syncId to us, we adopt it.
+                // If they chose to take ours, data.syncId will equal our currentSyncId.
+                if (data.syncId !== currentSyncId) {
+                    setSyncId(data.syncId);
+                }
                 setStatus("success");
                 setTimeout(() => {
                     window.location.reload();
-                }, 1500);
+                }, 2000);
             }
         });
 
@@ -50,26 +55,48 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
     // For "scan" tab (Mobile)
     const handleScan = async (result: any) => {
-        if (!result || !result[0] || !result[0].rawValue) return;
-        const scannedToken = result[0].rawValue;
-        if (!scannedToken.startsWith("sync-")) return;
+        if (!result || !result[0] || !result[0].rawValue || status !== "idle") return;
+        const code = result[0].rawValue;
+        if (!code.startsWith("sync-")) return;
 
-        if (isFirebaseConfigured() && db) {
-            try {
-                const docRef = doc(db, "syncRequests", scannedToken);
-                await setDoc(
-                    docRef,
-                    { status: "completed", syncId: currentSyncId, completedAt: new Date() },
-                    { merge: true }
-                );
-                setStatus("success");
-                setTimeout(() => {
-                    onClose();
-                }, 2000);
-            } catch (error) {
-                console.error("Sync error:", error);
-                setStatus("error");
+        setScannedToken(code);
+        setStatus("awaiting_choice");
+    };
+
+    const handleSyncChoice = async (keepMyData: boolean) => {
+        if (!scannedToken || !isFirebaseConfigured() || !db) return;
+
+        try {
+            // Extract the PC's syncId loosely from the token string if we structured it that way, 
+            // but actually we don't know the PC's sync id. Let's make the PC encode its syncId in the QR code!
+            // Wait, currently token is just `sync-randomId`.
+            // Let's change the QR code to include the PC's syncId: `sync-${pcSyncId}-${randomToken}`
+            const parts = scannedToken.split('|');
+            const pcToken = parts[0];
+            const pcSyncId = parts.length > 1 ? parts[1] : null;
+
+            const targetSyncId = keepMyData ? currentSyncId : (pcSyncId || currentSyncId);
+
+            if (!keepMyData && pcSyncId) {
+                // I will delete my local data and adopt the PC's syncId
+                setSyncId(pcSyncId);
             }
+
+            const docRef = doc(db, "syncRequests", pcToken);
+            await setDoc(
+                docRef,
+                { status: "completed", syncId: targetSyncId, completedAt: new Date() },
+                { merge: true }
+            );
+
+            setStatus("success");
+            setTimeout(() => {
+                if (!keepMyData) window.location.reload();
+                else onClose();
+            }, 2000);
+        } catch (error) {
+            console.error("Sync error:", error);
+            setStatus("error");
         }
     };
 
@@ -110,14 +137,30 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                     {status === "success" ? (
                         <div className={styles.successMessage}>
                             <div className={styles.successIcon}>✓</div>
-                            <p>{tab === "show" ? "동기화 완료! 잠시 후 새로고침됩니다." : "스캔 완료! PC 화면을 확인하세요."}</p>
+                            <p>{tab === "show" ? "동기화 완료! 잠시 후 새로고침됩니다." : "연결 완료! 데이터를 동기화합니다."}</p>
+                        </div>
+                    ) : status === "awaiting_choice" ? (
+                        <div className={styles.choiceContainer}>
+                            <h3 className={styles.choiceTitle}>어느 기기의 데이터를 유지할까요?</h3>
+                            <p className={styles.choiceSubtitle}>두 기기가 연결되었습니다. 기준이 될 데이터를 선택하세요.</p>
+                            <div className={styles.choiceButtons}>
+                                <button className={styles.choiceBtnPrimary} onClick={() => handleSyncChoice(true)}>
+                                    📱 현재 폰의 데이터 유지<br />
+                                    <small>(PC의 화면이 폰 기준으로 바뀝니다)</small>
+                                </button>
+                                <button className={styles.choiceBtnSecondary} onClick={() => handleSyncChoice(false)}>
+                                    💻 PC의 데이터 가져오기<br />
+                                    <small>(현재 폰의 화면이 PC 기준으로 바뀝니다)</small>
+                                </button>
+                            </div>
                         </div>
                     ) : tab === "show" ? (
                         <div className={styles.qrContainer}>
                             {token ? (
                                 <>
                                     <div className={styles.qrBg}>
-                                        <QRCodeSVG value={token} size={180} bgColor={"#ffffff"} fgColor={"#000000"} level={"L"} />
+                                        {/* encode PC's syncId in the QR code: "token|pcSyncId" */}
+                                        <QRCodeSVG value={`${token}|${currentSyncId}`} size={180} bgColor={"#ffffff"} fgColor={"#000000"} level={"L"} />
                                     </div>
                                     <p className={styles.instruction}>모바일 앱에서 이 QR 코드를 스캔하세요.</p>
                                 </>
