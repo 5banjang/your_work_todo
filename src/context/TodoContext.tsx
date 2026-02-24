@@ -56,7 +56,7 @@ export const setSyncId = (newId: string) => {
         localStorage.setItem("your-todo-sync-id", newId);
     }
 };
-export function TodoProvider({ children }: { children: ReactNode }) {
+export function TodoProvider({ children, batchId, todoId }: { children: ReactNode; batchId?: string; todoId?: string }) {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
     const [isLoaded, setIsLoaded] = useState(false);
@@ -64,8 +64,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const [activeSyncId, setActiveSyncId] = useState<string>("");
 
     useEffect(() => {
-        setActiveSyncId(getSyncId());
-    }, []);
+        if (!batchId && !todoId) {
+            setActiveSyncId(getSyncId());
+        }
+    }, [batchId, todoId]);
 
     const updateSyncId = useCallback((newId: string) => {
         setSyncId(newId);
@@ -241,33 +243,65 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
     // Load from Firestore or localStorage
     useEffect(() => {
-        if (!activeSyncId) return; // Wait until init
+        if (!batchId && !todoId && !activeSyncId) return; // Wait until init
 
         if (isFirebaseConfigured() && db) {
-            // Migrate old items without syncId
-            const migrateLegacy = async () => {
-                try {
-                    const allDocsSnap = await getDocs(collection(db!, "todos"));
-                    const batch = writeBatch(db!);
-                    let count = 0;
-                    allDocsSnap.forEach(d => {
-                        if (!d.data().syncId) {
-                            batch.update(d.ref, { syncId: activeSyncId });
-                            count++;
+            // Migrate old items without syncId (skip if in view-only mode)
+            if (!batchId && !todoId) {
+                const migrateLegacy = async () => {
+                    try {
+                        const allDocsSnap = await getDocs(collection(db!, "todos"));
+                        const batch = writeBatch(db!);
+                        let count = 0;
+                        allDocsSnap.forEach(d => {
+                            if (!d.data().syncId) {
+                                batch.update(d.ref, { syncId: activeSyncId });
+                                count++;
+                            }
+                        });
+                        if (count > 0) {
+                            await batch.commit();
+                            console.log(`Migrated ${count} legacy todos to syncId: ${activeSyncId}`);
                         }
-                    });
-                    if (count > 0) {
-                        await batch.commit();
-                        console.log(`Migrated ${count} legacy todos to syncId: ${activeSyncId}`);
+                    } catch (e) {
+                        console.error("Migration failed", e);
                     }
-                } catch (e) {
-                    console.error("Migration failed", e);
-                }
-            };
-            migrateLegacy();
+                };
+                migrateLegacy();
+            }
+
+            if (todoId) {
+                const docRef = doc(db, "todos", todoId);
+                const unsubscribe = onSnapshot(docRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const d = snapshot;
+                        const data = d.data();
+                        setTodos([{
+                            id: d.id,
+                            title: data.title,
+                            description: data.description,
+                            status: data.status,
+                            deadline: data.deadline?.toDate ? data.deadline.toDate() : null,
+                            assigneeName: data.assigneeName,
+                            createdBy: data.createdBy,
+                            checklist: data.checklist || [],
+                            syncId: data.syncId,
+                            batchId: data.batchId,
+                            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                        } as Todo]);
+                    } else {
+                        setTodos([]);
+                    }
+                    setIsLoaded(true);
+                });
+                return () => unsubscribe();
+            }
 
             const todosRef = collection(db, "todos");
-            const q = query(todosRef, where("syncId", "==", activeSyncId));
+            const q = batchId
+                ? query(todosRef, where("batchId", "==", batchId))
+                : query(todosRef, where("syncId", "==", activeSyncId));
+
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 const newTodos: Todo[] = [];
                 snapshot.forEach((d) => {
@@ -304,14 +338,14 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         } else {
             loadLocal();
         }
-    }, [activeSyncId, loadLocal]);
+    }, [activeSyncId, batchId, todoId, loadLocal]);
 
     // Save to localStorage ONLY if firebase is not configured
     useEffect(() => {
-        if (isLoaded && (!isFirebaseConfigured() || !db)) {
+        if (isLoaded && (!isFirebaseConfigured() || !db) && !batchId && !todoId) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
         }
-    }, [todos, isLoaded]);
+    }, [todos, isLoaded, batchId, todoId]);
 
     const addTodo = useCallback(async (title: string, deadline: Date | null) => {
         const now = new Date();

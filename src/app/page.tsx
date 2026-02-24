@@ -17,7 +17,7 @@ import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
-function Header({ onShareList, onOpenDashboard, onOpenSync }: { onShareList: () => void; onOpenDashboard: () => void; onOpenSync: () => void }) {
+function Header({ onShareList, onOpenDashboard, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -58,10 +58,10 @@ function Header({ onShareList, onOpenDashboard, onOpenSync }: { onShareList: () 
       <div className={styles.headerLeft}>
         <h1 className={styles.logo}>
           <span className={styles.logoIcon}>✦</span>
-          Your To-Do
+          {isSharedMode ? "요청받은 할 일" : "Your To-Do"}
         </h1>
         <p className={styles.subtitle}>
-          {viewMode === "list" ? "오늘의 할 일" : "프로젝트 보드"}
+          {isSharedMode ? "공유된 지시 리스트입니다" : (viewMode === "list" ? "오늘의 할 일" : "프로젝트 보드")}
         </p>
       </div>
       <div className={styles.headerRight}>
@@ -92,75 +92,83 @@ function Header({ onShareList, onOpenDashboard, onOpenSync }: { onShareList: () 
           <span className={styles.iconLabel}>알림</span>
         </div>
 
-        <div className={styles.iconBtnWrapper}>
-          <button
-            className={styles.shareListBtn}
-            onClick={onOpenDashboard}
-            type="button"
-            aria-label="지시 현황판"
-            title="지시 현황판 (보낸 일)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-              <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-            </svg>
-          </button>
-          <span className={styles.iconLabel}>보낸 일</span>
-        </div>
+        {!isSharedMode && (
+          <>
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
+                onClick={onOpenDashboard}
+                type="button"
+                aria-label="지시 현황판"
+                title="지시 현황판 (보낸 일)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                </svg>
+              </button>
+              <span className={styles.iconLabel}>보낸 일</span>
+            </div>
 
-        <div className={styles.iconBtnWrapper}>
-          <button
-            className={styles.shareListBtn}
-            onClick={onShareList}
-            type="button"
-            aria-label="리스트 공유"
-            title="전체 리스트 공유"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" />
-              <polyline points="16,6 12,2 8,6" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
-            </svg>
-          </button>
-          <span className={styles.iconLabel}>공유</span>
-        </div>
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
+                onClick={onShareList}
+                type="button"
+                aria-label="리스트 공유"
+                title="전체 리스트 공유"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" />
+                  <polyline points="16,6 12,2 8,6" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+                </svg>
+              </button>
+              <span className={styles.iconLabel}>공유</span>
+            </div>
+          </>
+        )}
 
         <div className={styles.iconBtnWrapper}>
           <ThemeSelector />
           <span className={styles.iconLabel}>테마</span>
         </div>
 
-        <div className={styles.iconBtnWrapper}>
-          <button
-            className={styles.shareListBtn}
-            onClick={onOpenSync}
-            type="button"
-            aria-label="기기 동기화"
-            title="기기 동기화 (QR 연동)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-              <line x1="12" y1="18" x2="12.01" y2="18" />
-            </svg>
-          </button>
-          <span className={styles.iconLabel}>기기연동</span>
-        </div>
+        {!isSharedMode && (
+          <>
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
+                onClick={onOpenSync}
+                type="button"
+                aria-label="기기 동기화"
+                title="기기 동기화 (QR 연동)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                  <line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+              </button>
+              <span className={styles.iconLabel}>기기연동</span>
+            </div>
 
-        <div className={styles.iconBtnWrapper}>
-          <button
-            className={styles.shareListBtn}
-            onClick={() => setIsSettingsOpen(true)}
-            type="button"
-            aria-label="앱 설정"
-            title="앱 설정"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-            </svg>
-          </button>
-          <span className={styles.iconLabel}>정보</span>
-        </div>
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
+                onClick={() => setIsSettingsOpen(true)}
+                type="button"
+                aria-label="앱 설정"
+                title="앱 설정"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+                </svg>
+              </button>
+              <span className={styles.iconLabel}>정보</span>
+            </div>
+          </>
+        )}
       </div>
 
       <AnimatePresence>
@@ -172,7 +180,7 @@ function Header({ onShareList, onOpenDashboard, onOpenSync }: { onShareList: () 
   );
 }
 
-function MainContent() {
+export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   const { viewMode, todos } = useTodos();
   const [settingsTodo, setSettingsTodo] = useState<Todo | null>(null);
   const [showShareList, setShowShareList] = useState(false);
@@ -190,9 +198,9 @@ function MainContent() {
 
   return (
     <>
-      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenSync={() => setShowSync(true)} />
+      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
       <main className="app-content">
-        {viewMode === "list" && <SmartInput />}
+        {!isSharedMode && viewMode === "list" && <SmartInput />}
 
         <AnimatePresence mode="wait">
           {viewMode === "list" ? (

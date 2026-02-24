@@ -23,7 +23,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
     // For "show" tab (PC)
     useEffect(() => {
-        if (tab !== "show" || !isFirebaseConfigured() || !db) return;
+        if (tab !== "show" || !isFirebaseConfigured() || !db || !currentSyncId) return;
 
         const newToken = `sync-${generateId()}`;
         setToken(newToken);
@@ -172,7 +172,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                         </div>
                     ) : tab === "show" ? (
                         <div className={styles.qrContainer}>
-                            {token ? (
+                            {token && currentSyncId ? (
                                 <>
                                     <div className={styles.qrBg}>
                                         {/* encode PC's syncId in the QR code: "token|pcSyncId" */}
