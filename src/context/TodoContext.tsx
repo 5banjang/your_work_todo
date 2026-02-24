@@ -298,43 +298,77 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
             }
 
             const todosRef = collection(db, "todos");
-            const q = batchId
-                ? query(todosRef, where("batchId", "==", batchId))
-                : query(todosRef, where("syncId", "==", activeSyncId));
+            let unsubscribes: (() => void)[] = [];
 
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const newTodos: Todo[] = [];
-                snapshot.forEach((d) => {
-                    const data = d.data();
-                    newTodos.push({
-                        id: d.id,
-                        title: data.title,
-                        description: data.description,
-                        status: data.status,
-                        order: typeof data.order === 'number' ? data.order : 0,
-                        deadline: data.deadline?.toDate ? data.deadline.toDate() : null,
-                        remindAt: data.remindAt?.toDate ? data.remindAt.toDate() : null,
-                        assigneeId: data.assigneeId,
-                        assigneeName: data.assigneeName,
-                        createdBy: data.createdBy,
-                        shareLink: data.shareLink,
-                        batchId: data.batchId,
-                        checklist: data.checklist || [],
-                        geoFence: data.geoFence,
-                        syncId: data.syncId,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
-                        completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
-                    } as Todo);
-                });
-                newTodos.sort((a, b) => a.order - b.order);
-                setTodos(newTodos);
+            const mergeSnapshots = () => {
+                const combined = Array.from(tasksMap.values());
+                combined.sort((a, b) => a.order - b.order);
+                setTodos(combined);
                 setIsLoaded(true);
-            }, (error) => {
-                console.error("Firestore error:", error);
-                loadLocal();
-            });
-            return () => unsubscribe();
+            };
+
+            const tasksMap = new Map<string, Todo>();
+
+            const handleSnapshot = (snapshot: any) => {
+                snapshot.docChanges().forEach((change: any) => {
+                    const data = change.doc.data();
+                    const todoId = change.doc.id;
+                    if (change.type === "removed") {
+                        tasksMap.delete(todoId);
+                    } else {
+                        tasksMap.set(todoId, {
+                            id: todoId,
+                            title: data.title,
+                            description: data.description,
+                            status: data.status,
+                            order: typeof data.order === 'number' ? data.order : 0,
+                            deadline: data.deadline?.toDate ? data.deadline.toDate() : null,
+                            remindAt: data.remindAt?.toDate ? data.remindAt.toDate() : null,
+                            assigneeId: data.assigneeId,
+                            assigneeName: data.assigneeName,
+                            createdBy: data.createdBy,
+                            shareLink: data.shareLink,
+                            batchId: data.batchId,
+                            checklist: data.checklist || [],
+                            geoFence: data.geoFence,
+                            syncId: data.syncId,
+                            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
+                            completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
+                        } as Todo);
+                    }
+                });
+                mergeSnapshots();
+            };
+
+            if (batchId) {
+                const q = query(todosRef, where("batchId", "==", batchId));
+                unsubscribes.push(onSnapshot(q, handleSnapshot, (err) => {
+                    console.error("Firestore error:", err);
+                    loadLocal();
+                }));
+            } else {
+                const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+
+                // 1. My tasks (syncId)
+                const qSync = query(todosRef, where("syncId", "==", activeSyncId));
+                unsubscribes.push(onSnapshot(qSync, handleSnapshot, (err) => {
+                    console.error("Firestore error (syncId):", err);
+                    loadLocal();
+                }));
+
+                // 2. Tasks assigned to me
+                if (myNickname && myNickname !== "누군가") {
+                    const qAssignee = query(todosRef, where("assigneeName", "==", myNickname));
+                    unsubscribes.push(onSnapshot(qAssignee, handleSnapshot, (err) => {
+                        console.error("Firestore error (assignee):", err);
+                    }));
+                }
+            }
+
+            return () => {
+                unsubscribes.forEach(unsub => unsub());
+            };
         } else {
             loadLocal();
         }

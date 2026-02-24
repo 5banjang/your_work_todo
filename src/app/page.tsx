@@ -14,11 +14,12 @@ import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
 import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
 import GuideModal from "@/components/GuideModal/GuideModal";
 import DelegationDashboard from "@/components/DelegationDashboard/DelegationDashboard";
+import ReceivedTasksDashboard from "@/components/ReceivedTasksDashboard/ReceivedTasksDashboard";
 import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
-function Header({ onShareList, onOpenDashboard, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
+function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -115,6 +116,24 @@ function Header({ onShareList, onOpenDashboard, onOpenSync, isSharedMode }: { on
             <div className={styles.iconBtnWrapper}>
               <button
                 className={styles.shareListBtn}
+                onClick={onOpenReceivedTasks}
+                type="button"
+                aria-label="수신함 (받은 일)"
+                title="수신함 (받은 일)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                  <path d="M22 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  <line x1="16" y1="18" x2="22" y2="18" />
+                  <line x1="19" y1="15" x2="19" y2="21" />
+                </svg>
+              </button>
+              <span className={styles.iconLabel}>받은 일</span>
+            </div>
+
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
                 onClick={onOpenDashboard}
                 type="button"
                 aria-label="지시 현황판"
@@ -204,6 +223,7 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   const [showShareList, setShowShareList] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showReceivedTasks, setShowReceivedTasks] = useState(false);
   const [showSync, setShowSync] = useState(false);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
@@ -216,7 +236,7 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
 
   return (
     <>
-      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
+      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenReceivedTasks={() => setShowReceivedTasks(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
       <main className="app-content">
         {!isSharedMode && viewMode === "list" && <SmartInput />}
 
@@ -229,7 +249,7 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <TodoList onSettings={handleOpenSettings} />
+              <TodoList onSettings={handleOpenSettings} isSharedMode={isSharedMode} />
             </motion.div>
           ) : (
             <motion.div
@@ -263,11 +283,9 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
       </AnimatePresence>
 
       <DelegationDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} />
-
-      {/* App Guide */}
+      <ReceivedTasksDashboard isOpen={showReceivedTasks} onClose={() => setShowReceivedTasks(false)} />
       <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
-      {/* Sync Modal */}
       <AnimatePresence>
         {showSync && (
           <DeviceSyncModal onClose={() => setShowSync(false)} />

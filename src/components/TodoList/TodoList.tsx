@@ -23,6 +23,7 @@ import TodoCard from "@/components/TodoCard/TodoCard";
 
 interface TodoListProps {
     onSettings?: (todo: Todo) => void;
+    isSharedMode?: boolean;
 }
 
 function SortableTodoCard({ todo, onSettings }: { todo: Todo; onSettings?: (todo: Todo) => void }) {
@@ -49,7 +50,7 @@ function SortableTodoCard({ todo, onSettings }: { todo: Todo; onSettings?: (todo
     );
 }
 
-export default function TodoList({ onSettings }: TodoListProps) {
+export default function TodoList({ onSettings, isSharedMode }: TodoListProps) {
     const { todos, reorderTodos, clearCompletedTodos } = useTodos();
 
     const sensors = useSensors(
@@ -60,6 +61,9 @@ export default function TodoList({ onSettings }: TodoListProps) {
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
     const myTodos = todos.filter((t) => {
+        // In shared mode, we are viewing someone else's list (batchId or todoId), show everything.
+        if (isSharedMode) return true;
+
         // Enforce isolation: ensure the task belongs to or is assigned to me (or legacy "me" tasks).
         const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
         if (!involvesMe) return false;
