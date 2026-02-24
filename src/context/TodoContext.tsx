@@ -33,6 +33,8 @@ interface TodoContextType {
     moveTodoStatus: (id: string, status: TodoStatus) => void;
     fcmToken: string | null;
     requestPushPermission: () => Promise<void>;
+    activeSyncId: string;
+    updateSyncId: (newId: string) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -59,6 +61,16 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
     const [isLoaded, setIsLoaded] = useState(false);
     const [fcmToken, setFcmToken] = useState<string | null>(null);
+    const [activeSyncId, setActiveSyncId] = useState<string>("");
+
+    useEffect(() => {
+        setActiveSyncId(getSyncId());
+    }, []);
+
+    const updateSyncId = useCallback((newId: string) => {
+        setSyncId(newId);
+        setActiveSyncId(newId);
+    }, []);
 
     const prevTodosRef = React.useRef<Todo[]>([]);
     const nicknameRef = React.useRef("");
@@ -229,9 +241,9 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
     // Load from Firestore or localStorage
     useEffect(() => {
-        if (isFirebaseConfigured() && db) {
-            const currentSyncId = getSyncId();
+        if (!activeSyncId) return; // Wait until init
 
+        if (isFirebaseConfigured() && db) {
             // Migrate old items without syncId
             const migrateLegacy = async () => {
                 try {
@@ -240,13 +252,13 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                     let count = 0;
                     allDocsSnap.forEach(d => {
                         if (!d.data().syncId) {
-                            batch.update(d.ref, { syncId: currentSyncId });
+                            batch.update(d.ref, { syncId: activeSyncId });
                             count++;
                         }
                     });
                     if (count > 0) {
                         await batch.commit();
-                        console.log(`Migrated ${count} legacy todos to syncId: ${currentSyncId}`);
+                        console.log(`Migrated ${count} legacy todos to syncId: ${activeSyncId}`);
                     }
                 } catch (e) {
                     console.error("Migration failed", e);
@@ -255,7 +267,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             migrateLegacy();
 
             const todosRef = collection(db, "todos");
-            const q = query(todosRef, where("syncId", "==", currentSyncId));
+            const q = query(todosRef, where("syncId", "==", activeSyncId));
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 const newTodos: Todo[] = [];
                 snapshot.forEach((d) => {
@@ -292,7 +304,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         } else {
             loadLocal();
         }
-    }, [loadLocal]);
+    }, [activeSyncId, loadLocal]);
 
     // Save to localStorage ONLY if firebase is not configured
     useEffect(() => {
@@ -524,6 +536,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                 moveTodoStatus,
                 fcmToken,
                 requestPushPermission,
+                activeSyncId,
+                updateSyncId,
             }}
         >
             {children}

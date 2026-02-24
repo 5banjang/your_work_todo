@@ -6,7 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { doc, setDoc, onSnapshot, deleteDoc, getDoc } from "firebase/firestore";
-import { getSyncId, setSyncId } from "@/context/TodoContext";
+import { getSyncId, useTodos } from "@/context/TodoContext";
 import { generateId } from "@/lib/utils";
 import styles from "./DeviceSyncModal.module.css";
 
@@ -19,7 +19,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const [token, setToken] = useState<string>("");
     const [status, setStatus] = useState<"idle" | "awaiting_choice" | "success" | "error">("idle");
     const [scannedToken, setScannedToken] = useState<string | null>(null);
-    const currentSyncId = getSyncId();
+    const { activeSyncId: currentSyncId, updateSyncId } = useTodos();
 
     // For "show" tab (PC)
     useEffect(() => {
@@ -38,12 +38,12 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                 // If the mobile device sent a different syncId to us, we adopt it.
                 // If they chose to take ours, data.syncId will equal our currentSyncId.
                 if (data.syncId !== currentSyncId) {
-                    setSyncId(data.syncId);
+                    updateSyncId(data.syncId);
                 }
                 setStatus("success");
                 setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                    onClose();
+                }, 1500);
             }
         });
 
@@ -95,7 +95,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
             if (!keepMyData && pcSyncId) {
                 // I will delete my local data and adopt the PC's syncId
-                setSyncId(pcSyncId);
+                updateSyncId(pcSyncId);
             }
 
             await setDoc(
@@ -108,11 +108,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
             // Allow time for Firebase sync & local storage to persist before reload
             setTimeout(() => {
-                if (!keepMyData) {
-                    window.location.href = "/"; // Force full reload to break out of React cache
-                } else {
-                    onClose();
-                }
+                onClose();
             }, 1000);
         } catch (error) {
             console.error("Sync error:", error);
