@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, deleteDoc, getDoc } from "firebase/firestore";
 import { getSyncId, setSyncId } from "@/context/TodoContext";
 import { generateId } from "@/lib/utils";
 import styles from "./DeviceSyncModal.module.css";
@@ -30,7 +30,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
         // Create a temporary document in Firestore to wait for the scan
         const docRef = doc(db, "syncRequests", newToken);
-        setDoc(docRef, { status: "pending", createdAt: new Date() }).catch(console.error);
+        setDoc(docRef, { status: "pending", syncId: currentSyncId, createdAt: new Date() }).catch(console.error);
 
         const unsubscribe = onSnapshot(docRef, (snap) => {
             const data = snap.data();
@@ -70,7 +70,26 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
             // Extract the PC's syncId loosely from the token string
             const parts = scannedToken.split('|');
             const pcToken = parts[0];
-            const pcSyncId = parts.length > 1 ? parts[1] : null;
+            let pcSyncId = parts.length > 1 ? parts[1] : null;
+
+            const docRef = doc(db, "syncRequests", pcToken);
+
+            // Fallback: If QR didn't contain pcSyncId, try to fetch it from the DB
+            if (!pcSyncId) {
+                const snap = await getDoc(docRef);
+                if (snap.exists() && snap.data().syncId) {
+                    pcSyncId = snap.data().syncId;
+                }
+            }
+
+            // If the user wants to pull from PC but we STILL don't have pcSyncId, it means the PC is using an old cached version
+            if (!keepMyData && !pcSyncId) {
+                alert("연결된 PC가 이전 버전입니다.\\nPC 화면을 새로고침(또는 앱 재시작)한 뒤 다시 QR을 스캔해주세요.");
+                setStatus("idle");
+                setScannedToken(null);
+                setTab("show");
+                return;
+            }
 
             const targetSyncId = keepMyData ? currentSyncId : (pcSyncId || currentSyncId);
 
@@ -79,7 +98,6 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                 setSyncId(pcSyncId);
             }
 
-            const docRef = doc(db, "syncRequests", pcToken);
             await setDoc(
                 docRef,
                 { status: "completed", syncId: targetSyncId, completedAt: new Date() },
