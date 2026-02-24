@@ -12,7 +12,10 @@ import {
     updateDoc,
     deleteDoc,
     writeBatch,
-    deleteField
+    deleteField,
+    query,
+    where,
+    getDocs
 } from "firebase/firestore";
 import { getToken, onMessage } from "firebase/messaging";
 
@@ -36,8 +39,21 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 const STORAGE_KEY = "your-todo-data";
 
+export const getSyncId = () => {
+    if (typeof window === "undefined") return "server-sync-id";
+    let id = localStorage.getItem("your-todo-sync-id");
+    if (!id) {
+        id = generateId() + "-" + generateId();
+        localStorage.setItem("your-todo-sync-id", id);
+    }
+    return id;
+};
 
-
+export const setSyncId = (newId: string) => {
+    if (typeof window !== "undefined") {
+        localStorage.setItem("your-todo-sync-id", newId);
+    }
+};
 export function TodoProvider({ children }: { children: ReactNode }) {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
@@ -214,8 +230,33 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     // Load from Firestore or localStorage
     useEffect(() => {
         if (isFirebaseConfigured() && db) {
+            const currentSyncId = getSyncId();
+
+            // Migrate old items without syncId
+            const migrateLegacy = async () => {
+                try {
+                    const allDocsSnap = await getDocs(collection(db!, "todos"));
+                    const batch = writeBatch(db!);
+                    let count = 0;
+                    allDocsSnap.forEach(d => {
+                        if (!d.data().syncId) {
+                            batch.update(d.ref, { syncId: currentSyncId });
+                            count++;
+                        }
+                    });
+                    if (count > 0) {
+                        await batch.commit();
+                        console.log(`Migrated ${count} legacy todos to syncId: ${currentSyncId}`);
+                    }
+                } catch (e) {
+                    console.error("Migration failed", e);
+                }
+            };
+            migrateLegacy();
+
             const todosRef = collection(db, "todos");
-            const unsubscribe = onSnapshot(todosRef, (snapshot) => {
+            const q = query(todosRef, where("syncId", "==", currentSyncId));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
                 const newTodos: Todo[] = [];
                 snapshot.forEach((d) => {
                     const data = d.data();
@@ -234,6 +275,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
                         batchId: data.batchId,
                         checklist: data.checklist || [],
                         geoFence: data.geoFence,
+                        syncId: data.syncId,
                         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                         updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
                         completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
@@ -274,6 +316,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             checklist: [],
             createdAt: now,
             updatedAt: now,
+            syncId: getSyncId(),
         };
 
         if (isFirebaseConfigured() && db) {

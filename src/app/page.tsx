@@ -13,10 +13,11 @@ import ThemeSelector from "@/components/ThemeSelector/ThemeSelector";
 import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
 import GuideModal from "@/components/GuideModal/GuideModal";
 import DelegationDashboard from "@/components/DelegationDashboard/DelegationDashboard";
+import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import type { Todo } from "@/types/todo";
 import styles from "./page.module.css";
 
-function Header({ onShareList, onOpenDashboard }: { onShareList: () => void; onOpenDashboard: () => void }) {
+function Header({ onShareList, onOpenDashboard, onOpenSync }: { onShareList: () => void; onOpenDashboard: () => void; onOpenSync: () => void }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -119,6 +120,19 @@ function Header({ onShareList, onOpenDashboard }: { onShareList: () => void; onO
         </div>
         <button
           className={styles.shareListBtn}
+          onClick={onOpenSync}
+          type="button"
+          aria-label="기기 동기화"
+          title="기기 동기화 (QR 연결)"
+          style={{ marginLeft: 8 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+            <line x1="12" y1="18" x2="12.01" y2="18" />
+          </svg>
+        </button>
+        <button
+          className={styles.shareListBtn}
           onClick={() => setIsSettingsOpen(true)}
           type="button"
           aria-label="앱 설정"
@@ -147,6 +161,7 @@ function MainContent() {
   const [showShareList, setShowShareList] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showSync, setShowSync] = useState(false);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
     setSettingsTodo(todo);
@@ -158,7 +173,7 @@ function MainContent() {
 
   return (
     <>
-      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} />
+      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenSync={() => setShowSync(true)} />
       <main className="app-content">
         {viewMode === "list" && <SmartInput />}
 
@@ -208,6 +223,13 @@ function MainContent() {
 
       {/* App Guide */}
       <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+      {/* Sync Modal */}
+      <AnimatePresence>
+        {showSync && (
+          <DeviceSyncModal onClose={() => setShowSync(false)} />
+        )}
+      </AnimatePresence>
     </>
   );
 }

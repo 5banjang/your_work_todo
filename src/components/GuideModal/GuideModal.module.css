@@ -20,7 +20,7 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 245, 255, 0.05);
     border-radius: 24px;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -62,13 +62,21 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    position: relative;
+    min-height: 380px;
 }
 
-.guideItem {
+.stepContainer {
     display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    flex: 1;
+}
+
+.stepHeader {
+    display: flex;
+    align-items: center;
     gap: 1rem;
-    align-items: flex-start;
 }
 
 .iconBox {
@@ -84,30 +92,68 @@
 }
 
 .subtitle {
-    margin: 0 0 0.25rem 0;
-    font-size: 1.05rem;
+    margin: 0;
+    font-size: 1.2rem;
     color: var(--color-accent-cyan);
-    font-weight: 600;
+    font-weight: 700;
+}
+
+.imageWrapper {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stepImage {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 .text {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--color-text-secondary);
     line-height: 1.6;
 }
 
-.text strong {
-    color: var(--color-text-primary);
+.dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 1.5rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s;
+}
+
+.activeDot {
+    background: var(--color-accent-cyan);
+    width: 24px;
+    border-radius: 4px;
 }
 
 .footer {
     padding: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    gap: 1rem;
 }
 
-.confirmBtn {
-    width: 100%;
+.prevBtn {
+    flex: 1;
     background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -119,6 +165,25 @@
     transition: all 0.2s;
 }
 
-.confirmBtn:hover {
+.prevBtn:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.nextBtn {
+    flex: 2;
+    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-purple));
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+}
+
+.nextBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 245, 255, 0.4);
 }
