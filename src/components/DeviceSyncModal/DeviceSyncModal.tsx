@@ -2,46 +2,42 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QRCodeSVG } from "qrcode.react";
-import { Scanner } from "@yudiel/react-qr-scanner";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { doc, setDoc, onSnapshot, deleteDoc, getDoc } from "firebase/firestore";
-import { getSyncId, useTodos } from "@/context/TodoContext";
+import { useTodos } from "@/context/TodoContext";
 import styles from "./DeviceSyncModal.module.css";
 
 interface DeviceSyncModalProps {
     onClose: () => void;
 }
 
+type SyncMode = "select" | "generate" | "enter" | "awaiting_choice" | "success" | "error";
+
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
-    const [tab, setTab] = useState<"show" | "scan">("show");
+    const [mode, setMode] = useState<SyncMode>("select");
     const [token, setToken] = useState<string>("");
     const [manualCodeInput, setManualCodeInput] = useState<string>("");
-    const [status, setStatus] = useState<"idle" | "awaiting_choice" | "success" | "error">("idle");
     const [scannedToken, setScannedToken] = useState<string | null>(null);
     const { activeSyncId: currentSyncId, updateSyncId } = useTodos();
 
-    // For "show" tab (PC)
+    // Mode: "generate"
     useEffect(() => {
-        if (tab !== "show" || !isFirebaseConfigured() || !db || !currentSyncId) return;
+        if (mode !== "generate" || !isFirebaseConfigured() || !db || !currentSyncId) return;
 
-        // Generate a simple 6-digit code for manual entry
+        // Generate a 6-digit code
         const newToken = Math.floor(100000 + Math.random() * 900000).toString();
         setToken(newToken);
 
-        // Create a temporary document in Firestore to wait for the scan
         const docRef = doc(db, "syncRequests", newToken);
         setDoc(docRef, { status: "pending", syncId: currentSyncId, createdAt: new Date() }).catch(console.error);
 
         const unsubscribe = onSnapshot(docRef, (snap) => {
             const data = snap.data();
             if (data && data.status === "completed" && data.syncId) {
-                // If the mobile device sent a different syncId to us, we adopt it.
-                // If they chose to take ours, data.syncId will equal our currentSyncId.
                 if (data.syncId !== currentSyncId) {
                     updateSyncId(data.syncId);
                 }
-                setStatus("success");
+                setMode("success");
                 setTimeout(() => {
                     onClose();
                 }, 1500);
@@ -52,28 +48,19 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
             unsubscribe();
             deleteDoc(docRef).catch(console.error);
         };
-    }, [tab]);
-
-    // For "scan" tab (Mobile)
-    const handleScan = async (result: any) => {
-        if (!result || !result[0] || !result[0].rawValue || status !== "idle") return;
-        const code = result[0].rawValue as string;
-        if (!code.includes("|")) return; // Only process valid Your To-Do QR codes
-
-        setScannedToken(code);
-        setStatus("awaiting_choice");
-    };
+    }, [mode, currentSyncId, updateSyncId, onClose]);
 
     const handleManualSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!manualCodeInput || manualCodeInput.length < 6 || status !== "idle" || !db) return;
+        if (!manualCodeInput || manualCodeInput.length < 6 || mode !== "enter" || !db || !currentSyncId) return;
 
         try {
             const docRef = doc(db, "syncRequests", manualCodeInput);
             const snap = await getDoc(docRef);
             if (snap.exists() && snap.data().syncId) {
+                // Prepend our code so we know which request to update in handleSyncChoice
                 setScannedToken(`${manualCodeInput}|${snap.data().syncId}`);
-                setStatus("awaiting_choice");
+                setMode("awaiting_choice");
             } else {
                 alert("유효하지 않은 연결 코드이거나 만료되었습니다.");
             }
@@ -87,35 +74,21 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
         if (!scannedToken || !isFirebaseConfigured() || !db) return;
 
         try {
-            // Extract the PC's syncId loosely from the token string
             const parts = scannedToken.split('|');
-            const pcToken = parts[0];
-            let pcSyncId = parts.length > 1 ? parts[1] : null;
+            const targetToken = parts[0];
+            const otherSyncId = parts.length > 1 ? parts[1] : null;
 
-            const docRef = doc(db, "syncRequests", pcToken);
-
-            // Fallback: If QR didn't contain pcSyncId, try to fetch it from the DB
-            if (!pcSyncId) {
-                const snap = await getDoc(docRef);
-                if (snap.exists() && snap.data().syncId) {
-                    pcSyncId = snap.data().syncId;
-                }
-            }
-
-            // If the user wants to pull from PC but we STILL don't have pcSyncId, it means the PC is using an old cached version
-            if (!keepMyData && !pcSyncId) {
-                alert("연결된 PC가 이전 버전입니다.\\nPC 화면을 새로고침(또는 앱 재시작)한 뒤 다시 QR을 스캔해주세요.");
-                setStatus("idle");
-                setScannedToken(null);
-                setTab("show");
+            if (!otherSyncId) {
+                alert("상대방의 기기 정보를 불러오지 못했습니다.");
+                setMode("select");
                 return;
             }
 
-            const targetSyncId = keepMyData ? currentSyncId : (pcSyncId || currentSyncId);
+            const docRef = doc(db, "syncRequests", targetToken);
+            const targetSyncId = keepMyData ? currentSyncId : otherSyncId;
 
-            if (!keepMyData && pcSyncId) {
-                // I will delete my local data and adopt the PC's syncId
-                updateSyncId(pcSyncId);
+            if (!keepMyData) {
+                updateSyncId(otherSyncId);
             }
 
             await setDoc(
@@ -124,15 +97,14 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                 { merge: true }
             );
 
-            setStatus("success");
+            setMode("success");
 
-            // Allow time for Firebase sync & local storage to persist before reload
             setTimeout(() => {
                 onClose();
             }, 1000);
         } catch (error) {
             console.error("Sync error:", error);
-            setStatus("error");
+            setMode("error");
         }
     };
 
@@ -152,83 +124,77 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                 </button>
 
                 <h2 className={styles.title}>기기 동기화</h2>
-                <p className={styles.subtitle}>PC와 모바일을 실시간으로 연결하세요</p>
-
-                <div className={styles.tabs}>
-                    <button
-                        className={`${styles.tabBtn} ${tab === "show" ? styles.active : ""}`}
-                        onClick={() => { setTab("show"); setStatus("idle"); }}
-                    >
-                        PC (QR 생성)
-                    </button>
-                    <button
-                        className={`${styles.tabBtn} ${tab === "scan" ? styles.active : ""}`}
-                        onClick={() => { setTab("scan"); setStatus("idle"); }}
-                    >
-                        모바일 (QR 스캔)
-                    </button>
-                </div>
+                <p className={styles.subtitle}>인증번호를 통해 실시간으로 기기를 연결하세요</p>
 
                 <div className={styles.content}>
-                    {status === "success" ? (
+                    {mode === "success" ? (
                         <div className={styles.successMessage}>
                             <div className={styles.successIcon}>✓</div>
-                            <p>{tab === "show" ? "동기화 완료! 잠시 후 새로고침됩니다." : "연결 완료! 데이터를 동기화합니다."}</p>
+                            <p>연결 완료! 데이터가 동기화되었습니다.</p>
                         </div>
-                    ) : status === "awaiting_choice" ? (
+                    ) : mode === "awaiting_choice" ? (
                         <div className={styles.choiceContainer}>
                             <h3 className={styles.choiceTitle}>어느 기기의 데이터를 유지할까요?</h3>
                             <p className={styles.choiceSubtitle}>두 기기가 연결되었습니다. 기준이 될 데이터를 선택하세요.</p>
                             <div className={styles.choiceButtons}>
                                 <button className={styles.choiceBtnPrimary} onClick={() => handleSyncChoice(true)}>
-                                    📱 현재 폰의 데이터 유지<br />
-                                    <small>(PC의 화면이 폰 기준으로 바뀝니다)</small>
+                                    📱 이 기기의 데이터 유지<br />
+                                    <small>(상대방 기기의 데이터가 이 기기 기준으로 바뀝니다)</small>
                                 </button>
                                 <button className={styles.choiceBtnSecondary} onClick={() => handleSyncChoice(false)}>
-                                    💻 PC의 데이터 가져오기<br />
-                                    <small>(현재 폰의 화면이 PC 기준으로 바뀝니다)</small>
+                                    💻 상대방 기기의 데이터 가져오기<br />
+                                    <small>(이 기기의 데이터가 기존 상대방의 데이터로 바뀝니다)</small>
                                 </button>
                             </div>
                         </div>
-                    ) : tab === "show" ? (
-                        <div className={styles.qrContainer}>
-                            {token && currentSyncId ? (
-                                <>
-                                    <div className={styles.qrBg}>
-                                        {/* encode PC's syncId in the QR code: "token|pcSyncId" */}
-                                        <QRCodeSVG value={`${token}|${currentSyncId}`} size={180} bgColor={"#ffffff"} fgColor={"#000000"} level={"L"} />
-                                    </div>
-                                    <p className={styles.instruction}>모바일 앱 카메라로 QR 코드를 스캔하거나,<br />아래의 6자리 코드를 직접 입력하세요.</p>
-                                    <div className={styles.codeDisplay}>
-                                        {token}
-                                    </div>
-                                </>
-                            ) : (
-                                <p>QR 코드를 생성하는 중...</p>
-                            )}
-                        </div>
-                    ) : (
-                        <div className={styles.scannerContainer}>
-                            <div className={styles.scannerWrapper}>
-                                <Scanner onScan={handleScan} />
+                    ) : mode === "generate" ? (
+                        <div className={styles.generateContainer}>
+                            <p className={styles.instruction}>상대방 기기에서 <strong>'인증번호 입력하기'</strong>를 누른 후<br />아래의 6자리 코드를 입력하세요.</p>
+                            <div className={styles.codeDisplay}>
+                                {token}
                             </div>
-                            <p className={styles.instruction}>PC 화면의 QR 코드를 사각형 안에 맞춰주세요.</p>
-
-                            <div className={styles.manualEntryDivider}>또는</div>
-
+                            <button className={styles.backBtnText} onClick={() => setMode("select")}>
+                                뒤로 가기
+                            </button>
+                        </div>
+                    ) : mode === "enter" ? (
+                        <div className={styles.enterContainer}>
+                            <p className={styles.instruction}>상대방 기기 화면에 표시된<br />6자리 인증번호를 입력해주세요.</p>
                             <form className={styles.manualEntryForm} onSubmit={handleManualSubmit}>
                                 <input
                                     type="text"
                                     maxLength={6}
-                                    placeholder="6자리 연결 코드 입력"
+                                    placeholder="6자리 인증번호"
                                     value={manualCodeInput}
                                     onChange={(e) => setManualCodeInput(e.target.value.replace(/[^0-9]/g, ''))}
                                     className={styles.manualInput}
+                                    autoFocus
                                 />
                                 <button type="submit" className={styles.manualSubmitBtn} disabled={manualCodeInput.length < 6}>
                                     연결
                                 </button>
                             </form>
+                            <button className={styles.backBtnText} onClick={() => { setMode("select"); setManualCodeInput(""); }}>
+                                뒤로 가기
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={styles.selectContainer}>
+                            <button className={styles.selectBtnPrimary} onClick={() => setMode("generate")}>
+                                <span className={styles.selectBtnIcon}>🔢</span>
+                                <div className={styles.selectBtnText}>
+                                    <strong>인증번호 발급받기</strong>
+                                    <span>이 기기에서 인증번호를 생성합니다</span>
+                                </div>
+                            </button>
+
+                            <button className={styles.selectBtnSecondary} onClick={() => setMode("enter")}>
+                                <span className={styles.selectBtnIcon}>⌨️</span>
+                                <div className={styles.selectBtnText}>
+                                    <strong>인증번호 입력하기</strong>
+                                    <span>다른 기기의 인증번호를 입력합니다</span>
+                                </div>
+                            </button>
                         </div>
                     )}
                 </div>
