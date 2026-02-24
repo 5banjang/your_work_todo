@@ -7,7 +7,6 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { doc, setDoc, onSnapshot, deleteDoc, getDoc } from "firebase/firestore";
 import { getSyncId, useTodos } from "@/context/TodoContext";
-import { generateId } from "@/lib/utils";
 import styles from "./DeviceSyncModal.module.css";
 
 interface DeviceSyncModalProps {
@@ -17,6 +16,7 @@ interface DeviceSyncModalProps {
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const [tab, setTab] = useState<"show" | "scan">("show");
     const [token, setToken] = useState<string>("");
+    const [manualCodeInput, setManualCodeInput] = useState<string>("");
     const [status, setStatus] = useState<"idle" | "awaiting_choice" | "success" | "error">("idle");
     const [scannedToken, setScannedToken] = useState<string | null>(null);
     const { activeSyncId: currentSyncId, updateSyncId } = useTodos();
@@ -25,7 +25,8 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     useEffect(() => {
         if (tab !== "show" || !isFirebaseConfigured() || !db || !currentSyncId) return;
 
-        const newToken = `sync-${generateId()}`;
+        // Generate a simple 6-digit code for manual entry
+        const newToken = Math.floor(100000 + Math.random() * 900000).toString();
         setToken(newToken);
 
         // Create a temporary document in Firestore to wait for the scan
@@ -56,11 +57,30 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     // For "scan" tab (Mobile)
     const handleScan = async (result: any) => {
         if (!result || !result[0] || !result[0].rawValue || status !== "idle") return;
-        const code = result[0].rawValue;
-        if (!code.startsWith("sync-")) return;
+        const code = result[0].rawValue as string;
+        if (!code.includes("|")) return; // Only process valid Your To-Do QR codes
 
         setScannedToken(code);
         setStatus("awaiting_choice");
+    };
+
+    const handleManualSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!manualCodeInput || manualCodeInput.length < 6 || status !== "idle" || !db) return;
+
+        try {
+            const docRef = doc(db, "syncRequests", manualCodeInput);
+            const snap = await getDoc(docRef);
+            if (snap.exists() && snap.data().syncId) {
+                setScannedToken(`${manualCodeInput}|${snap.data().syncId}`);
+                setStatus("awaiting_choice");
+            } else {
+                alert("유효하지 않은 연결 코드이거나 만료되었습니다.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("코드를 확인하는 중 오류가 발생했습니다.");
+        }
     };
 
     const handleSyncChoice = async (keepMyData: boolean) => {
@@ -178,7 +198,10 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                         {/* encode PC's syncId in the QR code: "token|pcSyncId" */}
                                         <QRCodeSVG value={`${token}|${currentSyncId}`} size={180} bgColor={"#ffffff"} fgColor={"#000000"} level={"L"} />
                                     </div>
-                                    <p className={styles.instruction}>모바일 앱에서 이 QR 코드를 스캔하세요.</p>
+                                    <p className={styles.instruction}>모바일 앱 카메라로 QR 코드를 스캔하거나,<br />아래의 6자리 코드를 직접 입력하세요.</p>
+                                    <div className={styles.codeDisplay}>
+                                        {token}
+                                    </div>
                                 </>
                             ) : (
                                 <p>QR 코드를 생성하는 중...</p>
@@ -186,8 +209,26 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                         </div>
                     ) : (
                         <div className={styles.scannerContainer}>
-                            <Scanner onScan={handleScan} />
+                            <div className={styles.scannerWrapper}>
+                                <Scanner onScan={handleScan} />
+                            </div>
                             <p className={styles.instruction}>PC 화면의 QR 코드를 사각형 안에 맞춰주세요.</p>
+
+                            <div className={styles.manualEntryDivider}>또는</div>
+
+                            <form className={styles.manualEntryForm} onSubmit={handleManualSubmit}>
+                                <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="6자리 연결 코드 입력"
+                                    value={manualCodeInput}
+                                    onChange={(e) => setManualCodeInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                    className={styles.manualInput}
+                                />
+                                <button type="submit" className={styles.manualSubmitBtn} disabled={manualCodeInput.length < 6}>
+                                    연결
+                                </button>
+                            </form>
                         </div>
                     )}
                 </div>
