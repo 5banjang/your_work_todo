@@ -67,10 +67,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
         if (!scannedToken || !isFirebaseConfigured() || !db) return;
 
         try {
-            // Extract the PC's syncId loosely from the token string if we structured it that way, 
-            // but actually we don't know the PC's sync id. Let's make the PC encode its syncId in the QR code!
-            // Wait, currently token is just `sync-randomId`.
-            // Let's change the QR code to include the PC's syncId: `sync-${pcSyncId}-${randomToken}`
+            // Extract the PC's syncId loosely from the token string
             const parts = scannedToken.split('|');
             const pcToken = parts[0];
             const pcSyncId = parts.length > 1 ? parts[1] : null;
@@ -90,10 +87,15 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
             );
 
             setStatus("success");
+
+            // Allow time for Firebase sync & local storage to persist before reload
             setTimeout(() => {
-                if (!keepMyData) window.location.reload();
-                else onClose();
-            }, 2000);
+                if (!keepMyData) {
+                    window.location.href = "/"; // Force full reload to break out of React cache
+                } else {
+                    onClose();
+                }
+            }, 1000);
         } catch (error) {
             console.error("Sync error:", error);
             setStatus("error");
