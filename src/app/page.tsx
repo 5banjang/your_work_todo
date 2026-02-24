@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { TodoProvider, useTodos } from "@/context/TodoContext";
 import SmartInput from "@/components/SmartInput/SmartInput";
@@ -91,6 +92,23 @@ function Header({ onShareList, onOpenDashboard, onOpenSync, isSharedMode }: { on
           </button>
           <span className={styles.iconLabel}>알림</span>
         </div>
+
+        {isSharedMode && (
+          <div className={styles.iconBtnWrapper}>
+            <Link
+              href="/"
+              className={styles.shareListBtn}
+              title="내 할 일 보기"
+              aria-label="내 할 일 보기"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </Link>
+            <span className={styles.iconLabel}>내 할 일</span>
+          </div>
+        )}
 
         {!isSharedMode && (
           <>
