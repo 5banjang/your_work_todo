@@ -9,7 +9,7 @@ import { collection, query, where, getDocs, writeBatch } from "firebase/firestor
 function SyncContent() {
     const params = useParams();
     const router = useRouter();
-    const { updateSyncId } = useTodos();
+    const { activeSyncId, updateSyncId } = useTodos();
     const newSyncId = params.id as string;
 
     const [statusText, setStatusText] = useState("기기 연동을 준비 중입니다...");
@@ -20,11 +20,13 @@ function SyncContent() {
             return;
         }
 
-        const currentLocalSyncId = getSyncId();
+        if (!activeSyncId) return; // wait until context initializes the syncId
+
+        const currentLocalSyncId = activeSyncId;
 
         // If trying to sync to the exact same ID, do nothing and redirect
         if (currentLocalSyncId === newSyncId) {
-            router.replace("/");
+            window.location.href = "/";
             return;
         }
 
@@ -74,7 +76,7 @@ function SyncContent() {
 
         performMergeAndRedirect();
 
-    }, [newSyncId, router, updateSyncId]);
+    }, [newSyncId, router, activeSyncId, updateSyncId]);
 
     return (
         <div style={{
