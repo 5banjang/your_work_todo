@@ -106,21 +106,25 @@ function SyncContent() {
     );
 }
 
+import { TodoProvider } from "@/context/TodoContext";
+
 export default function SyncPage() {
     return (
-        <Suspense fallback={
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100vh",
-                backgroundColor: "var(--color-bg)",
-                color: "var(--color-text-muted)"
-            }}>
-                로딩 중...
-            </div>
-        }>
-            <SyncContent />
-        </Suspense>
+        <TodoProvider>
+            <Suspense fallback={
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100vh",
+                    backgroundColor: "var(--color-bg)",
+                    color: "var(--color-text-muted)"
+                }}>
+                    로딩 중...
+                </div>
+            }>
+                <SyncContent />
+            </Suspense>
+        </TodoProvider>
     );
 }
