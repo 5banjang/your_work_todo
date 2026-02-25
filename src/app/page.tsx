@@ -320,22 +320,102 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeW, setActiveW] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState<boolean>(false);
+  const [pasteUrl, setPasteUrl] = useState("");
 
   useEffect(() => {
-    let w = searchParams?.get("w");
+    const w = searchParams?.get("w");
     if (!w) {
       const lastW = localStorage.getItem("last_workspace");
       if (lastW) {
-        w = lastW;
+        // We have a stored workspace, redirect to it
+        router.replace(`/?w=${lastW}`);
       } else {
-        w = generateId() + "-" + generateId();
+        // FIRST LAUNCH or PWA FRESH LAUNCH!
+        // Show the Welcome Screen, DO NOT auto-generate.
+        setShowWelcome(true);
       }
-      router.replace(`/?w=${w}`);
     } else {
+      // We have an active workspace in URL
       localStorage.setItem("last_workspace", w);
       setActiveW(w);
+      setShowWelcome(false);
     }
   }, [searchParams, router]);
+
+  const handleCreateNew = () => {
+    const newW = generateId() + "-" + generateId();
+    router.replace(`/?w=${newW}`);
+  };
+
+  const handleJoinExisting = (e: React.FormEvent) => {
+    e.preventDefault();
+    const urlTrimmed = pasteUrl.trim();
+    const wMatch = urlTrimmed.match(/[?&]w=([^&]+)/);
+    const idToUse = wMatch ? wMatch[1] : (urlTrimmed.startsWith('w=') ? urlTrimmed.replace('w=', '') : null);
+
+    if (idToUse) {
+      router.replace(`/?w=${idToUse}`);
+    } else if (urlTrimmed && !urlTrimmed.includes('http') && !urlTrimmed.includes('=')) {
+      router.replace(`/?w=${urlTrimmed}`);
+    } else {
+      alert('올바른 작업실 주소(또는 ID)가 아닙니다.');
+    }
+  };
+
+  if (showWelcome) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "24px", color: "var(--color-text-primary)", background: "var(--color-bg-base)", position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} style={{ width: "100%", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <h1 style={{ fontSize: "1.8rem", marginBottom: "8px", textAlign: "center", fontWeight: "bold" }}>환영합니다 👋</h1>
+          <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)", marginBottom: "32px", textAlign: "center", lineHeight: "1.5" }}>
+            홈 화면 앱(또는 새 브라우저) 환경입니다.<br />
+            어떻게 시작할까요?
+          </p>
+
+          <div style={{ width: "100%", background: "var(--color-bg-elevated)", padding: "24px", borderRadius: "16px", border: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: "24px", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
+
+            <button
+              onClick={handleCreateNew}
+              style={{ width: "100%", padding: "16px", borderRadius: "12px", background: "var(--color-accent-cyan)", color: "#000", fontWeight: "bold", border: "none", cursor: "pointer", fontSize: "1.05rem", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              새로운 할일 시작
+            </button>
+
+            <div style={{ width: "100%", height: "1px", background: "var(--color-border)", position: "relative", margin: "4px 0" }}>
+              <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "var(--color-bg-elevated)", padding: "0 12px", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>또는</span>
+            </div>
+
+            <form onSubmit={handleJoinExisting} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={{ fontSize: "0.95rem", fontWeight: "bold", color: "var(--color-text-primary)", display: "block", marginBottom: "4px" }}>기존 작업실 연결 (동기화 복원)</label>
+                <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", lineHeight: "1.4" }}>
+                  사파리나 카카오톡 브라우저에서 '복사'한 주소를 붙여넣어 주세요.
+                </p>
+              </div>
+              <input
+                type="text"
+                value={pasteUrl}
+                onChange={(e) => setPasteUrl(e.target.value)}
+                placeholder="예: https://.../?w=..."
+                style={{ width: "100%", padding: "14px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--color-text-primary)", fontSize: "0.95rem", outline: "none" }}
+              />
+              <button
+                type="submit"
+                disabled={!pasteUrl}
+                style={{ width: "100%", padding: "14px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.1)", color: "var(--color-text-primary)", fontWeight: "bold", border: "none", cursor: pasteUrl ? "pointer" : "not-allowed", opacity: pasteUrl ? 1 : 0.4, transition: "opacity 0.2s" }}
+              >
+                주소 연결하기
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (!activeW) {
     return (
