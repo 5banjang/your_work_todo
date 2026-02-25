@@ -11,17 +11,17 @@ interface DeviceSyncModalProps {
 }
 
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
-    const { activeSyncId } = useTodos();
+    const { activeWorkspaceId } = useTodos();
     const [syncLink, setSyncLink] = useState("");
     const [copied, setCopied] = useState(false);
     const [pasteUrl, setPasteUrl] = useState("");
 
     useEffect(() => {
-        if (typeof window !== "undefined" && activeSyncId) {
+        if (typeof window !== "undefined" && activeWorkspaceId) {
             const baseUrl = window.location.origin;
-            setSyncLink(`${baseUrl}/sync/${activeSyncId}`);
+            setSyncLink(`${baseUrl}/?w=${activeWorkspaceId}`);
         }
-    }, [activeSyncId]);
+    }, [activeWorkspaceId]);
 
     const handleCopy = async () => {
         if (!syncLink) return;
@@ -108,7 +108,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                if (pasteUrl.includes('/sync/')) {
+                                if (pasteUrl.includes('w=')) {
                                     window.location.href = pasteUrl.trim();
                                 } else {
                                     alert('올바른 연동 링크가 아닙니다.');

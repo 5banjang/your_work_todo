@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TodoProvider, useTodos } from "@/context/TodoContext";
+import { generateId } from "@/lib/utils";
 import SmartInput from "@/components/SmartInput/SmartInput";
 import TodoList from "@/components/TodoList/TodoList";
 import KanbanBoard from "@/components/KanbanBoard/KanbanBoard";
@@ -295,10 +297,56 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   );
 }
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeW, setActiveW] = useState<string | null>(null);
+
+  useEffect(() => {
+    let w = searchParams?.get("w");
+    if (!w) {
+      const lastW = localStorage.getItem("last_workspace");
+      if (lastW) {
+        w = lastW;
+      } else {
+        w = generateId() + "-" + generateId();
+      }
+      router.replace(`/?w=${w}`);
+    } else {
+      localStorage.setItem("last_workspace", w);
+      setActiveW(w);
+    }
+  }, [searchParams, router]);
+
+  if (!activeW) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", color: "var(--color-text-muted)" }}>
+        <div style={{
+          width: "30px", height: "30px", border: "2px solid var(--color-accent-cyan)",
+          borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite"
+        }} />
+      </div>
+    );
+  }
+
   return (
-    <TodoProvider>
+    <TodoProvider workspaceId={activeW}>
       <MainContent />
     </TodoProvider>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", color: "var(--color-text-muted)" }}>
+        <div style={{
+          width: "30px", height: "30px", border: "2px solid var(--color-accent-cyan)",
+          borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite"
+        }} />
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

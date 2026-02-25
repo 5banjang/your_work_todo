@@ -33,46 +33,21 @@ interface TodoContextType {
     moveTodoStatus: (id: string, status: TodoStatus) => void;
     fcmToken: string | null;
     requestPushPermission: () => Promise<void>;
-    activeSyncId: string;
-    updateSyncId: (newId: string) => void;
+    activeWorkspaceId: string;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 const STORAGE_KEY = "your-todo-data";
 
-export const getSyncId = () => {
-    if (typeof window === "undefined") return "server-sync-id";
-    let id = localStorage.getItem("your-todo-sync-id");
-    if (!id) {
-        id = generateId() + "-" + generateId();
-        localStorage.setItem("your-todo-sync-id", id);
-    }
-    return id;
-};
-
-export const setSyncId = (newId: string) => {
-    if (typeof window !== "undefined") {
-        localStorage.setItem("your-todo-sync-id", newId);
-    }
-};
-export function TodoProvider({ children, batchId, todoId }: { children: ReactNode; batchId?: string; todoId?: string }) {
+export function TodoProvider({ children, batchId, todoId, workspaceId }: { children: ReactNode; batchId?: string; todoId?: string; workspaceId?: string }) {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
     const [isLoaded, setIsLoaded] = useState(false);
     const [fcmToken, setFcmToken] = useState<string | null>(null);
-    const [activeSyncId, setActiveSyncId] = useState<string>("");
 
-    useEffect(() => {
-        if (!batchId && !todoId) {
-            setActiveSyncId(getSyncId());
-        }
-    }, [batchId, todoId]);
-
-    const updateSyncId = useCallback((newId: string) => {
-        setSyncId(newId);
-        setActiveSyncId(newId);
-    }, []);
+    // activeWorkspaceId is derived directly from props, defaulting to empty string if not provided
+    const activeWorkspaceId = workspaceId || "";
 
     const prevTodosRef = React.useRef<Todo[]>([]);
     const nicknameRef = React.useRef("");
@@ -243,7 +218,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
 
     // Load from Firestore or localStorage
     useEffect(() => {
-        if (!batchId && !todoId && !activeSyncId) return; // Wait until init
+        if (!batchId && !todoId && !activeWorkspaceId) return; // Wait until init
 
         if (isFirebaseConfigured() && db) {
             // Migrate old items without syncId (skip if in view-only mode)
@@ -255,13 +230,13 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
                         let count = 0;
                         allDocsSnap.forEach(d => {
                             if (!d.data().syncId) {
-                                batch.update(d.ref, { syncId: activeSyncId });
+                                batch.update(d.ref, { syncId: activeWorkspaceId });
                                 count++;
                             }
                         });
                         if (count > 0) {
                             await batch.commit();
-                            console.log(`Migrated ${count} legacy todos to syncId: ${activeSyncId}`);
+                            console.log(`Migrated ${count} legacy todos to syncId: ${activeWorkspaceId}`);
                         }
                     } catch (e) {
                         console.error("Migration failed", e);
@@ -351,7 +326,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
                 const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
                 // 1. My tasks (syncId)
-                const qSync = query(todosRef, where("syncId", "==", activeSyncId));
+                const qSync = query(todosRef, where("syncId", "==", activeWorkspaceId));
                 unsubscribes.push(onSnapshot(qSync, handleSnapshot, (err) => {
                     console.error("Firestore error (syncId):", err);
                     loadLocal();
@@ -372,7 +347,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
         } else {
             loadLocal();
         }
-    }, [activeSyncId, batchId, todoId, loadLocal]);
+    }, [activeWorkspaceId, batchId, todoId, loadLocal]);
 
     // Save to localStorage ONLY if firebase is not configured
     useEffect(() => {
@@ -396,7 +371,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
             checklist: [],
             createdAt: now,
             updatedAt: now,
-            syncId: getSyncId(),
+            syncId: activeWorkspaceId,
         };
 
         if (isFirebaseConfigured() && db) {
@@ -417,7 +392,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
             const newTodo: Todo = { id: newId, ...baseTodo } as Todo;
             setTodos((prev) => [newTodo, ...prev.map((t) => ({ ...t, order: t.order + 1 }))]);
         }
-    }, [todos]);
+    }, [todos, activeWorkspaceId]);
 
     const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
         if (isFirebaseConfigured() && db) {
@@ -604,8 +579,7 @@ export function TodoProvider({ children, batchId, todoId }: { children: ReactNod
                 moveTodoStatus,
                 fcmToken,
                 requestPushPermission,
-                activeSyncId,
-                updateSyncId,
+                activeWorkspaceId,
             }}
         >
             {children}
