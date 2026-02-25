@@ -72,6 +72,22 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                                 되돌리기
                             </button>
                         )}
+                        <button
+                            className={`${styles.btn} ${styles.btnDanger}`}
+                            style={{ padding: "4px 8px", fontSize: "0.75rem", marginLeft: "8px" }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete();
+                            }}
+                            type="button"
+                            aria-label="삭제"
+                            title="삭제"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            삭제
+                        </button>
                     </div>
                 </div>
             </motion.div>
