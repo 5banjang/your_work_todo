@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
-import QRCode from "react-qr-code";
 import styles from "./DeviceSyncModal.module.css";
 
 interface DeviceSyncModalProps {
@@ -51,28 +50,30 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                     </svg>
                 </button>
 
-                <h2 className={styles.title}>모바일-PC 기기 연동</h2>
+                <h2 className={styles.title}>작업실(Workspace) 주소</h2>
                 <p className={styles.subtitle}>
-                    아래 QR코드를 스마트폰 기본 카메라로 비추거나, <br />
-                    링크를 복사하여 카카오톡 등으로 보내 접속하세요.
+                    아래 링크를 복사하여 카카오톡으로 보내거나<br />
+                    다른 기기의 주소창에 붙여넣으면 즉시 똑같은 화면이 열립니다.
                 </p>
 
                 <div className={styles.content}>
-                    <div style={{
-                        background: "white",
-                        padding: "16px",
-                        borderRadius: "16px",
-                        display: "inline-block",
-                        marginBottom: "24px"
-                    }}>
-                        {syncLink ? (
-                            <QRCode value={syncLink} size={150} />
-                        ) : (
-                            <div style={{ width: 150, height: 150, background: "#eee" }} />
-                        )}
-                    </div>
+                    <div className={styles.buttonGroup} style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%", marginTop: "16px" }}>
+                        <div style={{
+                            width: "100%",
+                            maxWidth: "300px",
+                            padding: "12px",
+                            background: "rgba(255, 255, 255, 0.05)",
+                            borderRadius: "8px",
+                            border: "1px solid var(--color-border)",
+                            color: "var(--color-text-secondary)",
+                            fontSize: "0.85rem",
+                            wordBreak: "break-all",
+                            textAlign: "center",
+                            marginBottom: "8px"
+                        }}>
+                            {syncLink || "주소 생성 중..."}
+                        </div>
 
-                    <div className={styles.buttonGroup} style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%" }}>
                         <button
                             className={styles.manualSubmitBtn}
                             onClick={handleCopy}
@@ -83,7 +84,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                                         <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
-                                    복사 완료!
+                                    주소 복사 완료!
                                 </>
                             ) : (
                                 <>
@@ -91,18 +92,17 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                     </svg>
-                                    연동 링크 복사하기
+                                    내 작업실 주소 복사하기
                                 </>
                             )}
                         </button>
 
                         <p className={styles.instruction} style={{ marginTop: "8px", fontSize: "0.85rem", opacity: 0.8 }}>
-                            접속 즉시 이 기기와 <strong>실시간으로 동기화</strong>됩니다.<br />
-                            (인증번호 입력 과정 생략)
+                            로그인 없이 이 주소만 있으면 언제든 접속 가능합니다.
                         </p>
 
                         <div style={{ width: "100%", margin: "24px 0 16px", borderBottom: "1px solid var(--color-border)", position: "relative" }}>
-                            <span style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", background: "var(--color-bg-elevated)", padding: "0 10px", fontSize: "0.8rem", color: "var(--color-text-muted)", fontWeight: 500 }}>또는 앱에서 열기</span>
+                            <span style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", background: "var(--color-bg-elevated)", padding: "0 10px", fontSize: "0.8rem", color: "var(--color-text-muted)", fontWeight: 500 }}>홈 화면 앱 전용</span>
                         </div>
 
                         <form
@@ -111,22 +111,22 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                 if (pasteUrl.includes('w=')) {
                                     window.location.href = pasteUrl.trim();
                                 } else {
-                                    alert('올바른 연동 링크가 아닙니다.');
+                                    alert('올바른 작업실 링크가 아닙니다.');
                                 }
                             }}
                             style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "300px" }}
                         >
-                            <label style={{ fontSize: "0.85rem", color: "var(--color-text-primary)", alignSelf: "flex-start", fontWeight: 600 }}>홈 화면의 앱(PWA)에서 연동하려면?</label>
+                            <label style={{ fontSize: "0.85rem", color: "var(--color-text-primary)", alignSelf: "flex-start", fontWeight: 600 }}>아이폰 등 홈 화면에 추가한 앱 환경인가요?</label>
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <input
                                     type="text"
                                     value={pasteUrl}
                                     onChange={(e) => setPasteUrl(e.target.value)}
-                                    placeholder="복사한 링크 붙여넣기..."
+                                    placeholder="PC에서 복사해온 링크 붙여넣기..."
                                     style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--color-border)", background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-primary)", fontSize: "0.9rem" }}
                                 />
                                 <button type="submit" disabled={!pasteUrl} style={{ padding: "0 16px", borderRadius: "8px", background: "var(--color-accent-cyan)", color: "#000", fontWeight: "bold", border: "none", opacity: !pasteUrl ? 0.5 : 1, cursor: pasteUrl ? "pointer" : "not-allowed" }}>
-                                    연결
+                                    이동
                                 </button>
                             </div>
                         </form>
