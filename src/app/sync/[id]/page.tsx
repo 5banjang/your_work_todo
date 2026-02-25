@@ -33,43 +33,49 @@ function SyncContent() {
         const performMergeAndRedirect = async () => {
             setStatusText("기존 할 일 데이터를 안전하게 병합 중입니다...");
 
+            // 1. Attempt to merge existing local tasks to the new sync ID.
+            // If this fails (e.g. firestore validation error on legacy items), we just log it.
+            // Failing to merge shouldn't stop the device from syncing to the new ID.
             try {
                 if (isFirebaseConfigured() && db) {
-                    // Update all my todos that belonged to my OLD sync ID to the NEW sync ID
                     const todosRef = collection(db, "todos");
                     const q = query(todosRef, where("syncId", "==", currentLocalSyncId));
                     const myTodosSnap = await getDocs(q);
 
                     if (!myTodosSnap.empty) {
                         const batch = writeBatch(db);
+                        let count = 0;
                         myTodosSnap.forEach((d) => {
                             batch.update(d.ref, { syncId: newSyncId, updatedAt: new Date() });
+                            count++;
                         });
                         await batch.commit();
-                        console.log(`Merged ${myTodosSnap.size} tasks to new syncId: ${newSyncId}`);
+                        console.log(`Merged ${count} tasks to new syncId: ${newSyncId}`);
                     }
                 }
+            } catch (err) {
+                console.error("Non-fatal error during task merge:", err);
+                // We do not abort. We proceed to link the device anyway.
+            }
 
-                // Officially change my device's ID
+            // 2. Link the device definitively
+            try {
                 updateSyncId(newSyncId);
 
-                // Clear the local storage cache so it's forced to fetch entirely new data from Firestore for the new syncId
                 if (typeof window !== "undefined") {
                     localStorage.removeItem("your-todo-data");
                 }
 
                 setStatusText("연동이 완료되었습니다! 이동합니다.");
 
-                // Short timeout for better UX, then go home with a hard reload
                 setTimeout(() => {
                     window.location.href = "/";
                 }, 800);
-
             } catch (err) {
-                console.error("Device sync error:", err);
-                setStatusText("연동 중 오류가 발생했습니다. 잠시 후 홈으로 이동합니다.");
+                console.error("Critical error setting sync ID:", err);
+                setStatusText("기기 연동 중 치명적인 오류가 발생했습니다.");
                 setTimeout(() => {
-                    router.replace("/");
+                    window.location.href = "/";
                 }, 2000);
             }
         };
