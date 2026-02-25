@@ -51,11 +51,16 @@ function SyncContent() {
                 // Officially change my device's ID
                 updateSyncId(newSyncId);
 
+                // Clear the local storage cache so it's forced to fetch entirely new data from Firestore for the new syncId
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("your-todo-data");
+                }
+
                 setStatusText("연동이 완료되었습니다! 이동합니다.");
 
-                // Short timeout for better UX, then go home
+                // Short timeout for better UX, then go home with a hard reload
                 setTimeout(() => {
-                    router.replace("/");
+                    window.location.href = "/";
                 }, 800);
 
             } catch (err) {
