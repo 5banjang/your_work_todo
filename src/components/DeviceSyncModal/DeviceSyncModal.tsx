@@ -14,6 +14,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const { activeSyncId } = useTodos();
     const [syncLink, setSyncLink] = useState("");
     const [copied, setCopied] = useState(false);
+    const [pasteUrl, setPasteUrl] = useState("");
 
     useEffect(() => {
         if (typeof window !== "undefined" && activeSyncId) {
@@ -99,6 +100,36 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                             접속 즉시 이 기기와 <strong>실시간으로 동기화</strong>됩니다.<br />
                             (인증번호 입력 과정 생략)
                         </p>
+
+                        <div style={{ width: "100%", margin: "24px 0 16px", borderBottom: "1px solid var(--color-border)", position: "relative" }}>
+                            <span style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", background: "var(--color-bg-elevated)", padding: "0 10px", fontSize: "0.8rem", color: "var(--color-text-muted)", fontWeight: 500 }}>또는 앱에서 열기</span>
+                        </div>
+
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                if (pasteUrl.includes('/sync/')) {
+                                    window.location.href = pasteUrl.trim();
+                                } else {
+                                    alert('올바른 연동 링크가 아닙니다.');
+                                }
+                            }}
+                            style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "300px" }}
+                        >
+                            <label style={{ fontSize: "0.85rem", color: "var(--color-text-primary)", alignSelf: "flex-start", fontWeight: 600 }}>홈 화면의 앱(PWA)에서 연동하려면?</label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <input
+                                    type="text"
+                                    value={pasteUrl}
+                                    onChange={(e) => setPasteUrl(e.target.value)}
+                                    placeholder="복사한 링크 붙여넣기..."
+                                    style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--color-border)", background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-primary)", fontSize: "0.9rem" }}
+                                />
+                                <button type="submit" disabled={!pasteUrl} style={{ padding: "0 16px", borderRadius: "8px", background: "var(--color-accent-cyan)", color: "#000", fontWeight: "bold", border: "none", opacity: !pasteUrl ? 0.5 : 1, cursor: pasteUrl ? "pointer" : "not-allowed" }}>
+                                    연결
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </motion.div>
