@@ -429,7 +429,7 @@ function HomeContent() {
   }
 
   return (
-    <TodoProvider workspaceId={activeW}>
+    <TodoProvider key={activeW} workspaceId={activeW}>
       <MainContent />
     </TodoProvider>
   );

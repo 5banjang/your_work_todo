@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
+import { useRouter } from "next/navigation";
 import styles from "./DeviceSyncModal.module.css";
 
 interface DeviceSyncModalProps {
@@ -11,6 +12,7 @@ interface DeviceSyncModalProps {
 
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const { activeWorkspaceId } = useTodos();
+    const router = useRouter();
     const [syncLink, setSyncLink] = useState("");
     const [copied, setCopied] = useState(false);
     const [pasteUrl, setPasteUrl] = useState("");
@@ -113,10 +115,12 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                 const idToUse = wMatch ? wMatch[1] : (urlTrimmed.startsWith('w=') ? urlTrimmed.replace('w=', '') : null);
 
                                 if (idToUse) {
-                                    window.location.href = `/?w=${idToUse}`;
+                                    router.replace(`/?w=${idToUse}`);
+                                    onClose();
                                 } else if (urlTrimmed && !urlTrimmed.includes('http') && !urlTrimmed.includes('=')) {
                                     // If they just pasted the raw ID (e.g. "my-room-123")
-                                    window.location.href = `/?w=${urlTrimmed}`;
+                                    router.replace(`/?w=${urlTrimmed}`);
+                                    onClose();
                                 } else {
                                     alert('올바른 작업실 주소(또는 ID)가 아닙니다.');
                                 }
