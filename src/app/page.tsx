@@ -19,6 +19,7 @@ import DelegationDashboard from "@/components/DelegationDashboard/DelegationDash
 import ReceivedTasksDashboard from "@/components/ReceivedTasksDashboard/ReceivedTasksDashboard";
 import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import type { Todo } from "@/types/todo";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import styles from "./page.module.css";
 
 function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
@@ -241,6 +242,24 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
       <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenReceivedTasks={() => setShowReceivedTasks(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
       <main className="app-content">
         {!isSharedMode && viewMode === "list" && <SmartInput />}
+
+        {typeof window !== "undefined" && !isFirebaseConfigured() && (
+          <div style={{
+            background: "rgba(255, 50, 50, 0.1)",
+            border: "1px solid rgba(255, 50, 50, 0.5)",
+            color: "#ff6b6b",
+            padding: "12px",
+            borderRadius: "8px",
+            margin: "0 20px 16px",
+            fontSize: "0.85rem",
+            textAlign: "center",
+            lineHeight: "1.4"
+          }}>
+            ⚠️ <strong>클라우드(DB) 연결 실패!</strong><br />
+            Vercel 환경 변수가 정상적으로 설정되지 않았습니다.<br />
+            현재 작성하는 할 일은 기기 간 동기화되지 않습니다.
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {viewMode === "list" ? (

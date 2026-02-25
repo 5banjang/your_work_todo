@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Todo, TodoStatus } from "@/types/todo";
 import { generateId } from "@/lib/utils";
-import { db, isFirebaseConfigured, messaging } from "@/lib/firebase";
+import { db, isFirebaseConfigured, messaging, ensureAnonymousLogin } from "@/lib/firebase";
 import {
     collection,
     doc,
@@ -59,6 +59,13 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         syncNickname();
         window.addEventListener("storage", syncNickname);
         return () => window.removeEventListener("storage", syncNickname);
+    }, []);
+
+    // 파이어베이스 익명 로그인 강제 실행 (Firestore 규칙 검증을 위해 필요)
+    useEffect(() => {
+        if (isFirebaseConfigured()) {
+            ensureAnonymousLogin();
+        }
     }, []);
 
     // Detect when someone ELSE completes a todo and fire a local push notification
@@ -193,27 +200,16 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
     }, []);
 
     const loadLocal = useCallback(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored) as Todo[];
-                const restored = parsed.map((t) => ({
-                    ...t,
-                    deadline: t.deadline ? new Date(t.deadline) : null,
-                    remindAt: t.remindAt ? new Date(t.remindAt) : null,
-                    createdAt: new Date(t.createdAt),
-                    updatedAt: new Date(t.updatedAt),
-                    completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
-                    batchId: t.batchId,
-                }));
-                setTodos(restored);
-            } else {
-                setTodos([]);
-            }
-        } catch {
-            setTodos([]);
-        }
+        // 로컬 저장소(localStorage) 의존성 완전 제거:
+        // Vercel에서 환경변수 누락 시 임시 저장되는 현상을 방지하여,
+        // 클라우드 동기화 실패 상황을 사용자가 확실히 인지할 수 있도록 유도합니다.
+        setTodos([]);
         setIsLoaded(true);
+        if (typeof window !== "undefined" && !isFirebaseConfigured()) {
+            console.error(
+                "🚨 파이어베이스 연결 실패: Vercel 환경 변수(NEXT_PUBLIC_FIREBASE_*)가 누락되었거나 잘못되었습니다. 동기화가 불가능합니다."
+            );
+        }
     }, []);
 
     // Load from Firestore or localStorage
@@ -349,11 +345,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         }
     }, [activeWorkspaceId, batchId, todoId, loadLocal]);
 
-    // Save to localStorage ONLY if firebase is not configured
+    // 로컬 저장소 백업 로직 제거됨 (클라우드 동기화 100% 강제)
     useEffect(() => {
-        if (isLoaded && (!isFirebaseConfigured() || !db) && !batchId && !todoId) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-        }
+        // 로컬에 저장하지 않습니다.
     }, [todos, isLoaded, batchId, todoId]);
 
     const addTodo = useCallback(async (title: string, deadline: Date | null) => {

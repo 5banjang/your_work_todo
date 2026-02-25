@@ -1,6 +1,6 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
-import { getAuth, type Auth } from "firebase/auth";
+import { getAuth, signInAnonymously, type Auth } from "firebase/auth";
 import { getMessaging, type Messaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -23,6 +23,17 @@ const app = getFirebaseApp();
 
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const auth: Auth | null = app ? getAuth(app) : null;
+
+export async function ensureAnonymousLogin() {
+    if (!auth) return null;
+    try {
+        const userCredential = await signInAnonymously(auth);
+        return userCredential.user;
+    } catch (error) {
+        console.error("Anonymous auth failed:", error);
+        return null;
+    }
+}
 
 let _messaging: Messaging | null = null;
 if (typeof window !== "undefined" && app) {
