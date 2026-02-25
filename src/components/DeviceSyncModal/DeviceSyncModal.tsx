@@ -108,10 +108,17 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                if (pasteUrl.includes('w=')) {
-                                    window.location.href = pasteUrl.trim();
+                                const urlTrimmed = pasteUrl.trim();
+                                const wMatch = urlTrimmed.match(/[?&]w=([^&]+)/);
+                                const idToUse = wMatch ? wMatch[1] : (urlTrimmed.startsWith('w=') ? urlTrimmed.replace('w=', '') : null);
+
+                                if (idToUse) {
+                                    window.location.href = `/?w=${idToUse}`;
+                                } else if (urlTrimmed && !urlTrimmed.includes('http') && !urlTrimmed.includes('=')) {
+                                    // If they just pasted the raw ID (e.g. "my-room-123")
+                                    window.location.href = `/?w=${urlTrimmed}`;
                                 } else {
-                                    alert('올바른 작업실 링크가 아닙니다.');
+                                    alert('올바른 작업실 주소(또는 ID)가 아닙니다.');
                                 }
                             }}
                             style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "300px" }}
