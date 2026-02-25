@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, setDoc, onSnapshot, deleteDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, deleteDoc, getDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { useTodos } from "@/context/TodoContext";
 import styles from "./DeviceSyncModal.module.css";
 
@@ -11,13 +11,13 @@ interface DeviceSyncModalProps {
     onClose: () => void;
 }
 
-type SyncMode = "select" | "generate" | "enter" | "awaiting_choice" | "success" | "error";
+type SyncMode = "select" | "generate" | "enter" | "success" | "error";
 
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const [mode, setMode] = useState<SyncMode>("select");
     const [token, setToken] = useState<string>("");
     const [manualCodeInput, setManualCodeInput] = useState<string>("");
-    const [scannedToken, setScannedToken] = useState<string | null>(null);
+
     const { activeSyncId: currentSyncId, updateSyncId } = useTodos();
 
     // Mode: "generate"
@@ -50,61 +50,50 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
         };
     }, [mode, currentSyncId, updateSyncId, onClose]);
 
-    const handleManualSubmit = async (e?: React.FormEvent) => {
+    const handleManualSubmit = async (e?: React.FormEvent, directCode?: string) => {
         if (e) e.preventDefault();
-        if (!manualCodeInput || manualCodeInput.length < 6 || mode !== "enter" || !db || !currentSyncId) return;
+        const codeToUse = directCode || manualCodeInput;
+        if (!codeToUse || codeToUse.length < 6 || mode !== "enter" || !db || !currentSyncId) return;
 
         try {
-            const docRef = doc(db, "syncRequests", manualCodeInput);
+            const docRef = doc(db, "syncRequests", codeToUse);
             const snap = await getDoc(docRef);
             if (snap.exists() && snap.data().syncId) {
-                // Prepend our code so we know which request to update in handleSyncChoice
-                setScannedToken(`${manualCodeInput}|${snap.data().syncId}`);
-                setMode("awaiting_choice");
+                const otherSyncId = snap.data().syncId;
+
+                // Merge data: adopt otherSyncId, and move all local tasks to otherSyncId
+                const todosRef = collection(db, "todos");
+                const q = query(todosRef, where("syncId", "==", currentSyncId));
+                const myTodosSnap = await getDocs(q);
+
+                if (!myTodosSnap.empty) {
+                    const batch = writeBatch(db);
+                    myTodosSnap.forEach((d) => {
+                        batch.update(d.ref, { syncId: otherSyncId, updatedAt: new Date() });
+                    });
+                    await batch.commit();
+                }
+
+                if (otherSyncId !== currentSyncId) {
+                    updateSyncId(otherSyncId);
+                }
+
+                await setDoc(
+                    docRef,
+                    { status: "completed", syncId: otherSyncId, completedAt: new Date() },
+                    { merge: true }
+                );
+
+                setMode("success");
+                setTimeout(() => {
+                    onClose();
+                }, 1500);
             } else {
                 alert("유효하지 않은 연결 코드이거나 만료되었습니다.");
             }
         } catch (error) {
-            console.error(error);
-            alert("코드를 확인하는 중 오류가 발생했습니다.");
-        }
-    };
-
-    const handleSyncChoice = async (keepMyData: boolean) => {
-        if (!scannedToken || !isFirebaseConfigured() || !db) return;
-
-        try {
-            const parts = scannedToken.split('|');
-            const targetToken = parts[0];
-            const otherSyncId = parts.length > 1 ? parts[1] : null;
-
-            if (!otherSyncId) {
-                alert("상대방의 기기 정보를 불러오지 못했습니다.");
-                setMode("select");
-                return;
-            }
-
-            const docRef = doc(db, "syncRequests", targetToken);
-            const targetSyncId = keepMyData ? currentSyncId : otherSyncId;
-
-            if (!keepMyData) {
-                updateSyncId(otherSyncId);
-            }
-
-            await setDoc(
-                docRef,
-                { status: "completed", syncId: targetSyncId, completedAt: new Date() },
-                { merge: true }
-            );
-
-            setMode("success");
-
-            setTimeout(() => {
-                onClose();
-            }, 1000);
-        } catch (error) {
             console.error("Sync error:", error);
-            setMode("error");
+            alert("코드를 확인하는 중 오류가 발생했습니다.");
         }
     };
 
@@ -132,21 +121,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                             <div className={styles.successIcon}>✓</div>
                             <p>연결 완료! 데이터가 동기화되었습니다.</p>
                         </div>
-                    ) : mode === "awaiting_choice" ? (
-                        <div className={styles.choiceContainer}>
-                            <h3 className={styles.choiceTitle}>어느 기기의 데이터를 유지할까요?</h3>
-                            <p className={styles.choiceSubtitle}>두 기기가 연결되었습니다. 기준이 될 데이터를 선택하세요.</p>
-                            <div className={styles.choiceButtons}>
-                                <button className={styles.choiceBtnPrimary} onClick={() => handleSyncChoice(true)}>
-                                    📱 이 기기의 데이터 유지<br />
-                                    <small>(상대방 기기의 데이터가 이 기기 기준으로 바뀝니다)</small>
-                                </button>
-                                <button className={styles.choiceBtnSecondary} onClick={() => handleSyncChoice(false)}>
-                                    💻 상대방 기기의 데이터 가져오기<br />
-                                    <small>(이 기기의 데이터가 기존 상대방의 데이터로 바뀝니다)</small>
-                                </button>
-                            </div>
-                        </div>
+
                     ) : mode === "generate" ? (
                         <div className={styles.generateContainer}>
                             <p className={styles.instruction}>상대방 기기에서 <strong>'인증번호 입력하기'</strong>를 누른 후<br />아래의 6자리 코드를 입력하세요.</p>
@@ -166,7 +141,13 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                     maxLength={6}
                                     placeholder="6자리 인증번호"
                                     value={manualCodeInput}
-                                    onChange={(e) => setManualCodeInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setManualCodeInput(val);
+                                        if (val.length === 6) {
+                                            handleManualSubmit(undefined, val);
+                                        }
+                                    }}
                                     className={styles.manualInput}
                                     autoFocus
                                 />
