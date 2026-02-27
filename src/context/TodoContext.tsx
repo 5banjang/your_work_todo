@@ -19,7 +19,7 @@ import {
     getDocs
 } from "firebase/firestore";
 import { getToken, onMessage } from "firebase/messaging";
-import { playIfSoundEnabled } from "@/lib/notificationSound";
+import { playIfSoundEnabled, initAudioOnUserGesture } from "@/lib/notificationSound";
 
 interface TodoContextType {
     todos: Todo[];
@@ -67,6 +67,46 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         syncNickname();
         window.addEventListener("storage", syncNickname);
         return () => window.removeEventListener("storage", syncNickname);
+    }, []);
+
+    // 모바일 AudioContext autoplay 우회: 사용자 첫 터치 시 resume
+    useEffect(() => {
+        initAudioOnUserGesture();
+    }, []);
+
+    // 앱 로드 시 알림 권한이 이미 있으면 자동으로 FCM 토큰 등록
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (!("Notification" in window)) return;
+        if (Notification.permission !== "granted") return;
+        // 이미 권한이 있으므로 토큰만 자동 등록
+        const autoRegisterToken = async () => {
+            try {
+                const msg = messaging();
+                if (!msg) return;
+                let reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+                if (!reg) {
+                    reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+                }
+                const token = await getToken(msg, {
+                    serviceWorkerRegistration: reg,
+                    vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY
+                });
+                if (token && isFirebaseConfigured() && db) {
+                    const nickname = localStorage.getItem("your-todo-nickname") || "누군가";
+                    await setDoc(doc(db, "fcmTokens", token), {
+                        token,
+                        userNickname: nickname,
+                        updatedAt: new Date()
+                    }, { merge: true });
+                    setFcmToken(token);
+                    console.log("FCM token auto-registered:", token.substring(0, 20) + "...");
+                }
+            } catch (err) {
+                console.error("Auto FCM token registration failed:", err);
+            }
+        };
+        autoRegisterToken();
     }, []);
 
     // 파이어베이스 익명 로그인 및 Auth 리스너 설정

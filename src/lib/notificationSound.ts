@@ -1,17 +1,57 @@
 /**
  * 알림 사운드 유틸리티
  * Web Audio API를 사용하여 경쾌한 알림 멜로디를 생성합니다.
- * 별도의 mp3 파일 없이 브라우저에서 직접 합성됩니다.
  */
 
 let audioCtx: AudioContext | null = null;
+let isInitialized = false;
 
 function getAudioContext(): AudioContext | null {
     if (typeof window === "undefined") return null;
     if (!audioCtx) {
-        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        try {
+            audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        } catch (e) {
+            console.error("Web Audio API not supported:", e);
+            return null;
+        }
     }
     return audioCtx;
+}
+
+/**
+ * 모바일 브라우저의 autoplay 정책을 우회하기 위해
+ * 사용자의 첫 번째 터치/클릭 이벤트에서 AudioContext를 resume합니다.
+ * 앱 로드 시 한 번만 호출하면 됩니다.
+ */
+export function initAudioOnUserGesture(): void {
+    if (typeof window === "undefined" || isInitialized) return;
+
+    const unlock = () => {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === "suspended") {
+            ctx.resume().then(() => {
+                console.log("AudioContext resumed on user gesture");
+            });
+        }
+        // 무음 버퍼 재생 (iOS Safari 우회용)
+        if (ctx) {
+            const buffer = ctx.createBuffer(1, 1, 22050);
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            source.start(0);
+        }
+        isInitialized = true;
+        // 한 번만 실행하고 리스너 제거
+        document.removeEventListener("touchstart", unlock, true);
+        document.removeEventListener("touchend", unlock, true);
+        document.removeEventListener("click", unlock, true);
+    };
+
+    document.addEventListener("touchstart", unlock, true);
+    document.addEventListener("touchend", unlock, true);
+    document.addEventListener("click", unlock, true);
 }
 
 /**
