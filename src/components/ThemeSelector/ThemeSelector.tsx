@@ -7,7 +7,7 @@ import { useTheme } from "@/context/ThemeContext";
 type ThemeOption = { id: "pro" | "kids" | "family", label: string, icon: string, color: string };
 
 const THEMES: ThemeOption[] = [
-    { id: "pro", label: "Pro", icon: "✨", color: "#06d6a0" }, // Cyan accent
+    { id: "pro", label: "Pro", icon: "✨", color: "#13c8ec" }, // Cyan accent
     { id: "kids", label: "Kids", icon: "🎈", color: "#fca311" }, // Yellow/Orange accent
     { id: "family", label: "Family", icon: "🏠", color: "#fb8500" }, // Warm coral/orange
 ];
