@@ -12,20 +12,6 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
         // 'lastCompletedBy' should have been injected by the frontend when completing
         const completedBy = afterData.lastCompletedBy || "누군가";
 
-        // Prepare Notification Payload
-        const payload = {
-            notification: {
-                title: "할 일 완료 알림",
-                body: `${completedBy}님이 '${todoTitle}' 할 일을 완료했습니다!`,
-                icon: "/icons/icon-192.png",
-                requireInteraction: "true"
-            },
-            data: {
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-                url: "/"
-            }
-        };
-
         try {
             // Find all FCM Tokens stored in the 'fcmTokens' collection
             const tokensSnapshot = await admin.firestore().collection("fcmTokens").get();
@@ -44,8 +30,29 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
 
             if (tokens.length > 0) {
                 const message = {
-                    notification: payload.notification,
-                    data: payload.data,
+                    notification: {
+                        title: "할 일 완료 알림",
+                        body: `${completedBy}님이 '${todoTitle}' 할 일을 완료했습니다!`
+                    },
+                    webpush: {
+                        headers: {
+                            Urgency: "high"
+                        },
+                        notification: {
+                            icon: "/icons/icon-192.png",
+                            badge: "/icons/icon-192.png",
+                            requireInteraction: true,
+                            vibrate: [200, 100, 200, 100, 200],
+                            sound: "default"
+                        },
+                        fcmOptions: {
+                            link: "/"
+                        }
+                    },
+                    data: {
+                        click_action: "FLUTTER_NOTIFICATION_CLICK",
+                        url: "/"
+                    },
                     tokens: tokens
                 };
 
