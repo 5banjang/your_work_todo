@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Todo, TodoStatus } from "@/types/todo";
 import { generateId } from "@/lib/utils";
-import { db, isFirebaseConfigured, messaging, ensureAnonymousLogin } from "@/lib/firebase";
+import { db, isFirebaseConfigured, messaging, ensureAnonymousLogin, auth, googleProvider, signInWithPopup, onAuthStateChanged, signOut } from "@/lib/firebase";
+import { type User } from "firebase/auth";
 import {
     collection,
     doc,
@@ -34,6 +35,11 @@ interface TodoContextType {
     fcmToken: string | null;
     requestPushPermission: () => Promise<void>;
     activeWorkspaceId: string;
+
+    // Auth
+    user: User | null;
+    loginWithGoogle: () => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -45,6 +51,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
     const [viewMode, setViewMode] = useState<"list" | "board">("list");
     const [isLoaded, setIsLoaded] = useState(false);
     const [fcmToken, setFcmToken] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
 
     // activeWorkspaceId is derived directly from props, defaulting to empty string if not provided
     const activeWorkspaceId = workspaceId || "";
@@ -61,10 +68,41 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         return () => window.removeEventListener("storage", syncNickname);
     }, []);
 
-    // 파이어베이스 익명 로그인 강제 실행 (Firestore 규칙 검증을 위해 필요)
+    // 파이어베이스 익명 로그인 및 Auth 리스너 설정
     useEffect(() => {
         if (isFirebaseConfigured()) {
             ensureAnonymousLogin();
+            if (auth) {
+                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                    // Ignore anonymous users in this `user` state to treat them as guests UI-wise
+                    if (currentUser && !currentUser.isAnonymous) {
+                        setUser(currentUser);
+                    } else {
+                        setUser(null);
+                    }
+                });
+                return () => unsubscribe();
+            }
+        }
+    }, []);
+
+    const loginWithGoogle = useCallback(async () => {
+        if (!auth) return;
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            console.error("Google login failed:", error);
+            alert("로그인에 실패했습니다.");
+        }
+    }, []);
+
+    const logout = useCallback(async () => {
+        if (!auth) return;
+        try {
+            await signOut(auth);
+            setUser(null);
+        } catch (error) {
+            console.error("Logout failed:", error);
         }
     }, []);
 
@@ -241,6 +279,32 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 migrateLegacy();
             }
 
+            // Migrate to userId if logged in
+            if (!batchId && !todoId && user && activeWorkspaceId) {
+                const migrateToUser = async () => {
+                    try {
+                        const qSync = query(collection(db!, "todos"), where("syncId", "==", activeWorkspaceId));
+                        const snap = await getDocs(qSync);
+                        const batch = writeBatch(db!);
+                        let count = 0;
+                        snap.forEach(d => {
+                            const data = d.data();
+                            if (!data.userId || data.userId !== user.uid) {
+                                batch.update(d.ref, { userId: user.uid });
+                                count++;
+                            }
+                        });
+                        if (count > 0) {
+                            await batch.commit();
+                            console.log(`Migrated ${count} todos to user: ${user.uid}`);
+                        }
+                    } catch (e) {
+                        console.error("Migration to user failed", e);
+                    }
+                };
+                migrateToUser();
+            }
+
             if (todoId) {
                 const docRef = doc(db, "todos", todoId);
                 const unsubscribe = onSnapshot(docRef, (snapshot) => {
@@ -257,6 +321,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                             createdBy: data.createdBy,
                             checklist: data.checklist || [],
                             syncId: data.syncId,
+                            userId: data.userId,
                             batchId: data.batchId,
                             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                         } as Todo]);
@@ -303,6 +368,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                             checklist: data.checklist || [],
                             geoFence: data.geoFence,
                             syncId: data.syncId,
+                            userId: data.userId,
                             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                             updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
                             completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
@@ -321,12 +387,20 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             } else {
                 const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
-                // 1. My tasks (syncId)
-                const qSync = query(todosRef, where("syncId", "==", activeWorkspaceId));
-                unsubscribes.push(onSnapshot(qSync, handleSnapshot, (err) => {
-                    console.error("Firestore error (syncId):", err);
-                    loadLocal();
-                }));
+                // 1. My tasks (userId if logged in, otherwise syncId)
+                if (user) {
+                    const qUser = query(todosRef, where("userId", "==", user.uid));
+                    unsubscribes.push(onSnapshot(qUser, handleSnapshot, (err) => {
+                        console.error("Firestore error (userId):", err);
+                        loadLocal();
+                    }));
+                } else if (activeWorkspaceId) {
+                    const qSync = query(todosRef, where("syncId", "==", activeWorkspaceId));
+                    unsubscribes.push(onSnapshot(qSync, handleSnapshot, (err) => {
+                        console.error("Firestore error (syncId):", err);
+                        loadLocal();
+                    }));
+                }
 
                 // 2. Tasks assigned to me
                 if (myNickname && myNickname !== "누군가") {
@@ -343,7 +417,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         } else {
             loadLocal();
         }
-    }, [activeWorkspaceId, batchId, todoId, loadLocal]);
+    }, [activeWorkspaceId, batchId, todoId, loadLocal, user]);
 
     // 로컬 저장소 백업 로직 제거됨 (클라우드 동기화 100% 강제)
     useEffect(() => {
@@ -366,6 +440,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             createdAt: now,
             updatedAt: now,
             syncId: activeWorkspaceId,
+            ...(user ? { userId: user.uid } : {}),
         };
 
         if (isFirebaseConfigured() && db) {
@@ -574,6 +649,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 fcmToken,
                 requestPushPermission,
                 activeWorkspaceId,
+                user,
+                loginWithGoogle,
+                logout,
             }}
         >
             {children}

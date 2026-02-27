@@ -1,6 +1,6 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, type Auth } from "firebase/auth";
+import { getAuth, signInAnonymously, type Auth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { getMessaging, type Messaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -34,6 +34,9 @@ export async function ensureAnonymousLogin() {
         return null;
     }
 }
+
+export const googleProvider = new GoogleAuthProvider();
+export { signInWithPopup, onAuthStateChanged, signOut };
 
 let _messaging: Messaging | null = null;
 if (typeof window !== "undefined" && app) {

@@ -345,7 +345,7 @@ function HomeContent() {
 
   const handleCreateNew = () => {
     const newW = generateId() + "-" + generateId();
-    router.replace(`/?w=${newW}`);
+    window.location.href = `/?w=${newW}`;
   };
 
   const handleJoinExisting = (e: React.FormEvent) => {
@@ -355,9 +355,9 @@ function HomeContent() {
     const idToUse = wMatch ? wMatch[1] : (urlTrimmed.startsWith('w=') ? urlTrimmed.replace('w=', '') : null);
 
     if (idToUse) {
-      router.replace(`/?w=${idToUse}`);
+      window.location.href = `/?w=${idToUse}`;
     } else if (urlTrimmed && !urlTrimmed.includes('http') && !urlTrimmed.includes('=')) {
-      router.replace(`/?w=${urlTrimmed}`);
+      window.location.href = `/?w=${urlTrimmed}`;
     } else {
       alert('올바른 작업실 주소(또는 ID)가 아닙니다.');
     }
