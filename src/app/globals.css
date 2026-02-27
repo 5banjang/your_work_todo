@@ -10,40 +10,40 @@
 
 /* ---------- CSS Custom Properties (Design Tokens) ---------- */
 :root {
-  /* --- Color Palette --- */
-  --color-bg-primary: #0a0e17;
-  --color-bg-secondary: #111827;
-  --color-bg-card: rgba(17, 24, 39, 0.7);
+  /* --- Color Palette (Stitch-inspired Dark Teal) --- */
+  --color-bg-primary: #101f22;
+  --color-bg-secondary: #152a2e;
+  --color-bg-card: rgba(30, 58, 65, 0.5);
   --color-bg-glass: rgba(255, 255, 255, 0.04);
   --color-bg-glass-hover: rgba(255, 255, 255, 0.08);
   --color-bg-input: rgba(255, 255, 255, 0.06);
-  --color-modal-bg: linear-gradient(180deg, #1a2332 0%, #111827 100%);
+  --color-modal-bg: linear-gradient(180deg, #152a2e 0%, #101f22 100%);
 
   /* --- Structural Tokens --- */
   --border-width-glass: 1px;
-  --border-width-card: 1.5px;
+  --border-width-card: 1px;
 
   /* --- Glass Effect --- */
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.15);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-border-hover: rgba(19, 200, 236, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --glass-blur: blur(20px);
 
   /* --- Text --- */
-  --color-text-primary: #f1f5f9;
+  --color-text-primary: #e2e8f0;
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
-  --color-text-inverse: #0a0e17;
+  --color-text-inverse: #101f22;
 
-  /* --- Accent Colors --- */
-  --color-accent-cyan: #06d6a0;
-  --color-accent-cyan-glow: rgba(6, 214, 160, 0.3);
-  --color-accent-blue: #3b82f6;
-  --color-accent-blue-glow: rgba(59, 130, 246, 0.3);
+  /* --- Accent Colors (Cyan Primary) --- */
+  --color-accent-cyan: #13c8ec;
+  --color-accent-cyan-glow: rgba(19, 200, 236, 0.25);
+  --color-accent-blue: #0ea5e9;
+  --color-accent-blue-glow: rgba(14, 165, 233, 0.25);
 
   /* --- Status Colors --- */
-  --color-safe: #22c55e;
-  --color-safe-bg: rgba(34, 197, 94, 0.12);
+  --color-safe: #10b981;
+  --color-safe-bg: rgba(16, 185, 129, 0.12);
   --color-warning: #f59e0b;
   --color-warning-bg: rgba(245, 158, 11, 0.12);
   --color-warning-border: rgba(245, 158, 11, 0.5);
@@ -54,29 +54,22 @@
   --color-info-bg: rgba(139, 92, 246, 0.12);
 
   /* --- Kanban Column Colors --- */
-  --color-kanban-todo: #3b82f6;
+  --color-kanban-todo: #13c8ec;
   --color-kanban-progress: #f59e0b;
   --color-kanban-waiting: #8b5cf6;
-  --color-kanban-done: #22c55e;
+  --color-kanban-done: #10b981;
 
   /* --- Typography --- */
   --font-primary: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', monospace;
 
   --text-xs: 0.6875rem;
-  /* 11px */
   --text-sm: 0.8125rem;
-  /* 13px */
   --text-base: 0.9375rem;
-  /* 15px */
   --text-lg: 1.125rem;
-  /* 18px */
   --text-xl: 1.375rem;
-  /* 22px */
   --text-2xl: 1.75rem;
-  /* 28px */
   --text-3xl: 2.25rem;
-  /* 36px */
 
   --weight-light: 300;
   --weight-regular: 400;
@@ -86,23 +79,14 @@
 
   /* --- Spacing --- */
   --space-1: 0.25rem;
-  /* 4px */
   --space-2: 0.5rem;
-  /* 8px */
   --space-3: 0.75rem;
-  /* 12px */
   --space-4: 1rem;
-  /* 16px */
   --space-5: 1.25rem;
-  /* 20px */
   --space-6: 1.5rem;
-  /* 24px */
   --space-8: 2rem;
-  /* 32px */
   --space-10: 2.5rem;
-  /* 40px */
   --space-12: 3rem;
-  /* 48px */
 
   /* --- Border Radius --- */
   --radius-sm: 8px;
@@ -165,9 +149,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(6, 214, 160, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 500px at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
+    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(19, 200, 236, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 80% 80%, rgba(14, 165, 233, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }

@@ -2,34 +2,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-5) var(--space-4) var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  background: var(--color-modal-bg);
+  background: var(--color-bg-primary);
   border-bottom: var(--border-width-glass) solid var(--glass-border);
+  gap: var(--space-3);
 }
 
 .headerLeft {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: var(--weight-bold);
   background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: nowrap;
 }
 
 .logoIcon {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   -webkit-text-fill-color: var(--color-accent-cyan);
   filter: drop-shadow(0 0 8px var(--color-accent-cyan-glow));
 }
@@ -44,18 +48,28 @@
 .headerRight {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.headerRight::-webkit-scrollbar {
+  display: none;
 }
 
 .iconBtnWrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .iconLabel {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   color: var(--color-text-muted);
   font-weight: 500;
   white-space: nowrap;
@@ -67,15 +81,15 @@
 }
 
 .profileBtn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-full);
   background: var(--color-bg-glass);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   cursor: pointer;
   transition: all var(--transition-base);
 }
@@ -86,15 +100,15 @@
 }
 
 .shareListBtn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-full);
-  background: var(--color-bg-glass);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--transition-base);
 }

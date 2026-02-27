@@ -7,8 +7,10 @@
     max-width: var(--max-width);
     display: flex;
     align-items: stretch;
-    background: var(--color-modal-bg);
-    border-top: var(--border-width-glass) solid var(--glass-border);
+    background: rgba(16, 31, 34, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: var(--safe-area-bottom);
     z-index: var(--z-nav);
 }
