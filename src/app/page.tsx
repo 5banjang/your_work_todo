@@ -18,12 +18,15 @@ import GuideModal from "@/components/GuideModal/GuideModal";
 import DelegationDashboard from "@/components/DelegationDashboard/DelegationDashboard";
 import ReceivedTasksDashboard from "@/components/ReceivedTasksDashboard/ReceivedTasksDashboard";
 import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
+import LanguageSelector from "@/components/LanguageSelector/LanguageSelector";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Todo } from "@/types/todo";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import styles from "./page.module.css";
 
 function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
   const { viewMode, fcmToken, requestPushPermission } = useTodos();
+  const { t } = useLanguage();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -63,10 +66,10 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
       <div className={styles.headerLeft}>
         <h1 className={styles.logo}>
           <span className={styles.logoIcon}>✦</span>
-          {isSharedMode ? "요청받은 할 일" : "Your To-Do"}
+          {isSharedMode ? t("header.sharedMode") : "Your To-Do"}
         </h1>
         <p className={styles.subtitle}>
-          {isSharedMode ? "공유된 지시 리스트입니다" : (viewMode === "list" ? "오늘의 할 일" : "프로젝트 보드")}
+          {isSharedMode ? t("header.sharedSubtitle") : (viewMode === "list" ? t("header.subtitle.list") : t("header.subtitle.board"))}
         </p>
       </div>
       <div className={styles.headerRight}>
@@ -76,7 +79,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
             onClick={handlePushReq}
             type="button"
             aria-label="알림 설정"
-            title={pushEnabled ? "푸시 알림 끄기" : "푸시 알림 켜기"}
+            title={pushEnabled ? t("push.turnOff") : t("push.turnOn")}
           >
             {pushEnabled ? (
               /* ON State: Filled bell with ring waves */
@@ -94,7 +97,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
               </svg>
             )}
           </button>
-          <span className={styles.iconLabel}>알림</span>
+          <span className={styles.iconLabel}>{t("icon.alarm")}</span>
         </div>
 
         {isSharedMode && (
@@ -110,7 +113,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </Link>
-            <span className={styles.iconLabel}>내 할 일</span>
+            <span className={styles.iconLabel}>{t("icon.myTodo")}</span>
           </div>
         )}
 
@@ -131,7 +134,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                   <line x1="19" y1="15" x2="19" y2="21" />
                 </svg>
               </button>
-              <span className={styles.iconLabel}>받은 일</span>
+              <span className={styles.iconLabel}>{t("icon.received")}</span>
             </div>
 
             <div className={styles.iconBtnWrapper}>
@@ -147,7 +150,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                   <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
                 </svg>
               </button>
-              <span className={styles.iconLabel}>보낸 일</span>
+              <span className={styles.iconLabel}>{t("icon.sent")}</span>
             </div>
 
             <div className={styles.iconBtnWrapper}>
@@ -164,14 +167,19 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                   <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
                 </svg>
               </button>
-              <span className={styles.iconLabel}>공유</span>
+              <span className={styles.iconLabel}>{t("icon.share")}</span>
             </div>
           </>
         )}
 
         <div className={styles.iconBtnWrapper}>
           <ThemeSelector />
-          <span className={styles.iconLabel}>테마</span>
+          <span className={styles.iconLabel}>{t("icon.theme")}</span>
+        </div>
+
+        <div className={styles.iconBtnWrapper}>
+          <LanguageSelector />
+          <span className={styles.iconLabel}>{t("icon.language")}</span>
         </div>
 
         {!isSharedMode && (
@@ -189,7 +197,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                   <line x1="12" y1="18" x2="12.01" y2="18" />
                 </svg>
               </button>
-              <span className={styles.iconLabel}>기기연동</span>
+              <span className={styles.iconLabel}>{t("icon.sync")}</span>
             </div>
 
             <div className={styles.iconBtnWrapper}>
@@ -205,7 +213,7 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                 </svg>
               </button>
-              <span className={styles.iconLabel}>정보</span>
+              <span className={styles.iconLabel}>{t("icon.settings")}</span>
             </div>
           </>
         )}

@@ -3,12 +3,14 @@
 import React, { useState, useRef, useCallback } from "react";
 import { parseSmartInput } from "@/lib/nlp";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SmartInput.module.css";
 
 function getNow() { return new Date(); }
 
 export default function SmartInput() {
     const { addTodo } = useTodos();
+    const { t } = useLanguage();
     const [value, setValue] = useState("");
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +71,7 @@ export default function SmartInput() {
                     onChange={handleChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 300)}
-                    placeholder="내일 오후 3시까지 유튜브 썸네일 제작"
+                    placeholder={t("input.placeholder")}
                     className={styles.input}
                     id="smart-input"
                 />
@@ -77,7 +79,7 @@ export default function SmartInput() {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                         <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span>추가</span>
+                    <span>{t("input.add")}</span>
                 </button>
             </div>
         </form>

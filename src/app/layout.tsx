@@ -5,6 +5,7 @@ import KakaoRedirect from "@/components/KakaoRedirect/KakaoRedirect";
 import GlobalNicknameCheck from "@/components/NicknameModal/GlobalNicknameCheck";
 import InstallPrompt from "@/components/InstallPrompt/InstallPrompt";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://your-to-do-10bd1.web.app"),
@@ -55,7 +56,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0a0e17",
+  themeColor: "#101f22",
 };
 
 export default function RootLayout({
@@ -67,13 +68,15 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <ThemeProvider>
-          <ServiceWorkerRegistrar />
-          <KakaoRedirect />
-          <GlobalNicknameCheck />
-          <InstallPrompt />
-          <div className="app-container">
-            {children}
-          </div>
+          <LanguageProvider>
+            <ServiceWorkerRegistrar />
+            <KakaoRedirect />
+            <GlobalNicknameCheck />
+            <InstallPrompt />
+            <div className="app-container">
+              {children}
+            </div>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>
