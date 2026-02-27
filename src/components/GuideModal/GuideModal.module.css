@@ -4,52 +4,63 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    padding: 1.5rem;
+    padding: 1rem;
 }
 
 .modal {
     background: var(--color-bg-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 245, 255, 0.05);
-    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    border-radius: 20px;
     width: 100%;
     max-width: 440px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: 90vh;
+    max-height: 85vh;
 }
 
 .header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 0.75rem;
 }
 
 .title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--color-text-primary);
     margin: 0;
+    flex: 1;
+}
+
+.stepCounter {
+    font-size: 0.75rem;
+    color: var(--color-accent-cyan);
+    font-weight: 600;
+    background: rgba(19, 200, 236, 0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    white-space: nowrap;
 }
 
 .closeBtn {
     background: none;
     border: none;
     color: var(--color-text-muted);
-    font-size: 2rem;
-    line-height: 1;
     cursor: pointer;
-    padding: 0;
+    padding: 4px;
+    display: flex;
+    align-items: center;
     transition: color 0.2s;
 }
 
@@ -58,108 +69,123 @@
 }
 
 .content {
-    padding: 1.5rem;
+    padding: 1.25rem;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    position: relative;
-    min-height: 380px;
+    flex: 1;
+    min-height: 0;
 }
 
 .stepContainer {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
     flex: 1;
 }
 
 .stepHeader {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .iconBox {
-    background: rgba(0, 245, 255, 0.1);
-    min-width: 48px;
-    height: 48px;
+    background: rgba(19, 200, 236, 0.1);
+    min-width: 44px;
+    height: 44px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    border: 1px solid rgba(0, 245, 255, 0.2);
+    font-size: 1.4rem;
+    border: 1px solid rgba(19, 200, 236, 0.15);
 }
 
 .subtitle {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     color: var(--color-accent-cyan);
     font-weight: 700;
 }
 
-.imageWrapper {
-    width: 100%;
-    border-radius: 16px;
-    overflow: hidden;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    aspect-ratio: 16/9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.stepImage {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-}
-
 .text {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.875rem;
     color: var(--color-text-secondary);
-    line-height: 1.6;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.tipBox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(19, 200, 236, 0.06);
+    border: 1px solid rgba(19, 200, 236, 0.12);
+    border-radius: 10px;
+    margin-top: 0.25rem;
+}
+
+.tipIcon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    line-height: 1.5;
+}
+
+.tipText {
+    font-size: 0.8rem;
+    color: var(--color-accent-cyan);
+    line-height: 1.5;
+    font-weight: 500;
 }
 
 .dots {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
     margin-top: auto;
-    padding-top: 1.5rem;
+    padding-top: 1.25rem;
+    flex-wrap: wrap;
 }
 
 .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.dot:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .activeDot {
     background: var(--color-accent-cyan);
-    width: 24px;
+    width: 20px;
     border-radius: 4px;
 }
 
 .footer {
-    padding: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .prevBtn {
     flex: 1;
-    background: var(--color-bg-tertiary);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--color-text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem;
-    border-radius: 12px;
-    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -171,19 +197,19 @@
 
 .nextBtn {
     flex: 2;
-    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-purple));
-    color: #fff;
+    background: var(--color-accent-cyan);
+    color: var(--color-text-inverse);
     border: none;
-    padding: 1rem;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(19, 200, 236, 0.3);
 }
 
 .nextBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 245, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(19, 200, 236, 0.4);
 }
