@@ -17,7 +17,16 @@ export default function KanbanBoard() {
     const { todos, moveTodoStatus, clearCompletedTodos } = useTodos();
 
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+    const { user } = useTodos();
+
     const myTodos = todos.filter((t) => {
+        // 구글 로그인한 경우: Firestore에서 `userId`로 쿼리해 온 데이터이므로 기본적으로 모두 내 데이터입니다.
+        if (user) {
+            const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+            const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+            return !sentOutbox && !manuallyDelegated;
+        }
+
         const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
         if (!involvesMe) return false;
 
