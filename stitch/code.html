@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Main Dashboard Task List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13c8ec",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#101f22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-status-bar {
+            height: 44px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative mx-auto max-w-[430px] min-h-screen flex flex-col bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden">
+<div class="ios-status-bar flex justify-between items-end px-8 pb-2">
+<span class="text-sm font-semibold">9:41</span>
+<div class="flex gap-1.5 items-center">
+<span class="material-symbols-outlined text-[18px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[18px]">wifi</span>
+<span class="material-symbols-outlined text-[18px]">battery_full</span>
+</div>
+</div>
+<header class="px-6 pt-4 pb-2 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
+<img alt="User Profile" class="size-full object-cover" data-alt="Close up profile photo of a smiling professional person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB53hxvf1HfsjdGyA_cpngoGnf4_Rby7RD0mEhqMkaMaKve2BwTbgdXmhhiaNPGjKJ0tLcw1Un_m-sXJH9b9vF3LKBiKn42RIRapoPnGuJhFjazXKREZvhMEyFSy4fe4YXQ5t66SpNnoCcNv0oBwVnjIxi5fRT5BZJe5SK05FNJ0b-eMUHPnuRYpWd6UsoYQhbbG1C6MZbvZ-z-RtLvLD1nV00nK-dmgJjaIUEwGWgEA_KmV7j9CMCru3e21r8mEmUofP-BmZQ3okS"/>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight">Dashboard</h1>
+<p class="text-xs text-slate-500 dark:text-primary/70">Welcome back, Alex</p>
+</div>
+</div>
+<button class="size-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<nav class="px-6 mt-6">
+<div class="flex border-b border-slate-200 dark:border-slate-800">
+<button class="flex-1 py-3 text-sm font-semibold text-slate-400 dark:text-slate-500 transition-colors">
+                    My Tasks
+                </button>
+<button class="flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary transition-colors">
+                    Requested Tasks
+                </button>
+</div>
+</nav>
+<main class="flex-1 px-6 pt-6 pb-24 overflow-y-auto">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Active Requests (4)</h2>
+<button class="text-primary text-sm font-medium">Filter</button>
+</div>
+<div class="space-y-3">
+<div class="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">link</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm truncate">Design System Audit</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">Assigned to Sarah M. • 2h ago</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">Pending</span>
+<span class="text-[10px] text-slate-400">Viewed</span>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm truncate">API Documentation Review</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">Assigned to Kevin Chen • 5h ago</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-primary/10 text-primary">Viewed</span>
+<span class="text-[10px] text-slate-400">Sent</span>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm truncate">Weekly Analytics Export</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">Completed by Jordan L.</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">Completed</span>
+<span class="text-[10px] text-slate-400">Yesterday</span>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">attachment</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm truncate">Final Assets Upload</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">Assigned to Mike Ross • 1d ago</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">Pending</span>
+<span class="text-[10px] text-slate-400">Unread</span>
+</div>
+</div>
+</div>
+</main>
+<button class="absolute bottom-28 right-6 size-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 flex items-center justify-center z-20">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<footer class="fixed bottom-0 w-full max-w-[430px] bg-white dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 pb-8 pt-2">
+<div class="flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-[1]">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">check_box</span>
+<span class="text-[10px] font-medium">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-medium">Team</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+</footer>
+</div>
+</body></html>

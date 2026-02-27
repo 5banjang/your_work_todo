@@ -9,11 +9,9 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
     // Only proceed if status changed from something else to 'done'
     if (beforeData.status !== "done" && afterData.status === "done") {
         const todoTitle = afterData.title;
-        // 'lastCompletedBy' should have been injected by the frontend when completing
         const completedBy = afterData.lastCompletedBy || "누군가";
 
         try {
-            // Find all FCM Tokens stored in the 'fcmTokens' collection
             const tokensSnapshot = await admin.firestore().collection("fcmTokens").get();
             if (tokensSnapshot.empty) {
                 console.log("No FCM tokens found in DB.");
@@ -29,29 +27,27 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
             });
 
             if (tokens.length > 0) {
+                // ★ data-only 메시지 (notification 키 없음)
+                // notification 키가 있으면 브라우저가 직접 알림을 표시하여
+                // Service Worker의 커스텀 옵션(사운드 등)이 무시됩니다.
+                // data-only로 보내면 Service Worker가 알림을 직접 생성합니다.
                 const message = {
-                    notification: {
+                    data: {
+                        type: "TODO_COMPLETED",
                         title: "할 일 완료 알림",
-                        body: `${completedBy}님이 '${todoTitle}' 할 일을 완료했습니다!`
+                        body: `${completedBy}님이 '${todoTitle}' 할 일을 완료했습니다!`,
+                        completedBy: completedBy,
+                        todoTitle: todoTitle,
+                        url: "/"
                     },
                     webpush: {
                         headers: {
-                            Urgency: "high"
-                        },
-                        notification: {
-                            icon: "/icons/icon-192.png",
-                            badge: "/icons/icon-192.png",
-                            requireInteraction: true,
-                            vibrate: [200, 100, 200, 100, 200],
-                            sound: "default"
+                            Urgency: "high",
+                            TTL: "86400"
                         },
                         fcmOptions: {
                             link: "/"
                         }
-                    },
-                    data: {
-                        click_action: "FLUTTER_NOTIFICATION_CLICK",
-                        url: "/"
                     },
                     tokens: tokens
                 };
@@ -81,7 +77,7 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
                     await Promise.all(tokensToRemove);
                     console.log("Removed " + tokensToRemove.length + " invalid tokens.");
                 }
-                console.log("Notification broadcasts completed successfully");
+                console.log("Push sent to " + tokens.length + " devices, successes: " + response.successCount);
             }
         } catch (error) {
             console.error("Error broadcasting push notification:", error);
