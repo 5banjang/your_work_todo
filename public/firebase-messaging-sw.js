@@ -22,6 +22,8 @@ messaging.onBackgroundMessage((payload) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
+        tag: 'todo-completion-' + Date.now(),
+        requireInteraction: true, // PC에서 사용자가 클릭할 때까지 팝업 유지
         data: {
             url: payload.notification?.click_action || payload.data?.url || '/'
         }

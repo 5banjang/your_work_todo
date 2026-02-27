@@ -19,6 +19,7 @@ import {
     getDocs
 } from "firebase/firestore";
 import { getToken, onMessage } from "firebase/messaging";
+import { playIfSoundEnabled } from "@/lib/notificationSound";
 
 interface TodoContextType {
     todos: Todo[];
@@ -123,9 +124,13 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             return true;
         });
 
+        if (newlyCompleted.length > 0) {
+            // 소리 재생 (설정이 켜져 있을 때)
+            playIfSoundEnabled();
+        }
+
         newlyCompleted.forEach(t => {
             const doPush = () => {
-                const soundOn = localStorage.getItem("your-todo-sound") !== "false";
                 const vibrateOn = localStorage.getItem("your-todo-vibrate") !== "false";
                 const who = t.lastCompletedBy || "누군가";
                 const title = "완료 알림";
@@ -133,23 +138,22 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                     body: `${who}님이 '${t.title}' 할 일을 완료했습니다!`,
                     icon: "/icons/icon-192.png",
                     vibrate: vibrateOn ? [200, 100, 200] : undefined,
-                    silent: !soundOn && !vibrateOn
+                    silent: true  // 소리는 Web Audio API로 별도 재생하므로 OS 알림 소리는 끔
                 };
 
                 if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                     try {
-                        // Mobile browsers often ban new Notification() and require ServiceWorker
                         navigator.serviceWorker.ready.then((reg) => {
                             if (reg) {
                                 reg.showNotification(title, options).catch((err) => {
                                     console.error("SW showNotification error:", err);
-                                    new Notification(title, options); // fallback
+                                    new Notification(title, options);
                                 });
                             } else {
                                 new Notification(title, options);
                             }
                         }).catch(() => {
-                            new Notification(title, options); // fallback
+                            new Notification(title, options);
                         });
                     } catch (e) {
                         console.error("Push Notification Error:", e);
@@ -208,11 +212,17 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 
         const unsubscribe = onMessage(msg, (payload) => {
             console.log("Foreground push received:", payload);
+
+            // 포그라운드에서 FCM 수신 시 멜로디 재생
+            playIfSoundEnabled();
+
+            const vibrateOn = localStorage.getItem("your-todo-vibrate") !== "false";
             const title = payload.notification?.title || "알림";
             const options = {
                 body: payload.notification?.body || "새 알림이 도착했습니다.",
                 icon: "/icons/icon-192.png",
-                vibrate: [200, 100, 200]
+                vibrate: vibrateOn ? [200, 100, 200] : undefined,
+                silent: true  // 소리는 Web Audio API로 별도 재생
             };
             if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                 try {
