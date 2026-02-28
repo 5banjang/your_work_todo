@@ -6,7 +6,7 @@ self.addEventListener("install", (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
     );
-    // Do NOT call self.skipWaiting() here — let the update toast show first
+    self.skipWaiting();
 });
 
 // Activate: clean old caches
