@@ -1,4 +1,4 @@
-const CACHE_NAME = "your-todo-v2";
+const CACHE_NAME = "your-todo-v3";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 // Install: cache shell files

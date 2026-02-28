@@ -1,6 +1,9 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
+// v3.5.4 — Force SW update
+const SW_VERSION = '3.5.4';
+
 firebase.initializeApp({
     apiKey: "AIzaSyC28le0D8ZR34zUHucyFW2BD3VIWYFQxQc",
     authDomain: "your-to-do-10bd1.firebaseapp.com",
@@ -13,32 +16,32 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ★ data-only 메시지를 수신하여 Service Worker가 직접 알림을 생성합니다.
-// 이렇게 하면 사운드, 진동 등을 완전히 제어할 수 있습니다.
+// ★ Background message handler — FCM data-only 메시지 처리
 messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Received background message', payload);
+    console.log('[FCM SW v' + SW_VERSION + '] Background message received:', JSON.stringify(payload));
 
     const data = payload.data || {};
-    const notificationTitle = data.title || 'Your To-Do';
+    const notificationTitle = data.title || 'Your To-Do 알림';
+    const notificationBody = data.body || '새로운 알림이 있습니다.';
+
     const notificationOptions = {
-        body: data.body || '새로운 할 일 상태가 변경되었습니다.',
+        body: notificationBody,
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
-        tag: 'todo-completion-' + Date.now(),
+        tag: (data.type || 'general') + '-' + (data.todoId || Date.now()),
         requireInteraction: true,
-        // ★ Android Chrome에서 소리를 재생하려면 silent을 false로 하고
-        // 시스템 기본 알림 소리가 나도록 합니다.
         silent: false,
         data: {
             url: data.url || '/'
         }
     };
 
+    console.log('[FCM SW] Showing notification:', notificationTitle, notificationBody);
     return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Click event for background notifications
+// Click event for notifications
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     const url = event.notification.data?.url || '/';
@@ -57,7 +60,7 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-// Service Worker push event handler (data-only 메시지의 경우 이 핸들러가 호출됨)
+// Push event handler — fallback for direct push (not via FCM SDK)
 self.addEventListener('push', (event) => {
     if (event.data) {
         let payload;
@@ -67,33 +70,32 @@ self.addEventListener('push', (event) => {
             payload = { data: { title: 'Your To-Do', body: event.data.text() } };
         }
 
-        // FCM SDK가 이미 onBackgroundMessage로 처리한 경우 중복 방지
+        console.log('[FCM SW v' + SW_VERSION + '] Push event:', JSON.stringify(payload));
+
+        // If FCM SDK already handled via onBackgroundMessage, skip
         if (payload.notification) {
-            // notification 키가 있으면 FCM SDK가 자동 처리하므로 여기서는 무시
             return;
         }
 
         const data = payload.data || {};
-        const validTypes = ['TODO_COMPLETED', 'DEADLINE_REMINDER', 'DEADLINE_ARRIVED'];
+        const notificationTitle = data.title || '할 일 알림';
+        const notificationBody = data.body || '할 일 상태가 변경되었습니다.';
 
-        if (validTypes.includes(data.type)) {
-            const notificationTitle = data.title || '할 일 알림';
-            const notificationOptions = {
-                body: data.body || '할 일 상태가 변경되었습니다.',
-                icon: '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
-                vibrate: [200, 100, 200, 100, 200],
-                tag: data.type + '-' + (data.todoId || Date.now()),
-                requireInteraction: true,
-                silent: false,
-                data: {
-                    url: data.url || '/'
-                }
-            };
+        const notificationOptions = {
+            body: notificationBody,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            vibrate: [200, 100, 200, 100, 200],
+            tag: (data.type || 'push') + '-' + (data.todoId || Date.now()),
+            requireInteraction: true,
+            silent: false,
+            data: {
+                url: data.url || '/'
+            }
+        };
 
-            event.waitUntil(
-                self.registration.showNotification(notificationTitle, notificationOptions)
-            );
-        }
+        event.waitUntil(
+            self.registration.showNotification(notificationTitle, notificationOptions)
+        );
     }
 });
