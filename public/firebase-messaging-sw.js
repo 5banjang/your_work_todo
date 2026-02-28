@@ -74,14 +74,16 @@ self.addEventListener('push', (event) => {
         }
 
         const data = payload.data || {};
-        if (data.type === 'TODO_COMPLETED') {
-            const notificationTitle = data.title || '할 일 완료 알림';
+        const validTypes = ['TODO_COMPLETED', 'DEADLINE_REMINDER', 'DEADLINE_ARRIVED'];
+
+        if (validTypes.includes(data.type)) {
+            const notificationTitle = data.title || '할 일 알림';
             const notificationOptions = {
-                body: data.body || '할 일이 완료되었습니다.',
+                body: data.body || '할 일 상태가 변경되었습니다.',
                 icon: '/icons/icon-192.png',
                 badge: '/icons/icon-192.png',
                 vibrate: [200, 100, 200, 100, 200],
-                tag: 'todo-completion-' + Date.now(),
+                tag: data.type + '-' + (data.todoId || Date.now()),
                 requireInteraction: true,
                 silent: false,
                 data: {

@@ -593,6 +593,14 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 const docRef = doc(db!, "todos", id);
                 // Remove undefined values to avoid Firestore errors
                 const cleanUpdates = { ...updates, updatedAt: new Date() } as Record<string, any>;
+                // When deadline or remindAt changes, reset notification flags
+                // so Cloud Functions will re-trigger for the new times
+                if ('deadline' in updates) {
+                    cleanUpdates.deadlineNotified = false;
+                }
+                if ('remindAt' in updates) {
+                    cleanUpdates.reminderSent = false;
+                }
                 Object.keys(cleanUpdates).forEach(key => {
                     if (cleanUpdates[key] === undefined) delete cleanUpdates[key];
                 });
