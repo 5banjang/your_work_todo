@@ -6,7 +6,7 @@ self.addEventListener("install", (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
     );
-    self.skipWaiting();
+    // Do NOT call self.skipWaiting() here — let the update toast show first
 });
 
 // Activate: clean old caches
@@ -89,4 +89,11 @@ self.addEventListener("notificationclick", (event) => {
             }
         })
     );
+});
+
+// Message handler: allow the app to tell running SW to skip waiting
+self.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
 });
