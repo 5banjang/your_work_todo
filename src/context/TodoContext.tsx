@@ -264,11 +264,11 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                     }
                 }
 
-                // Clear remindAt in Firestore to prevent re-triggering on reload
+                // Mark as reminded via flag (don't clear remindAt — server needs it)
                 if (isFirebaseConfigured() && db) {
                     const docRef = doc(db!, "todos", t.id);
-                    updateDoc(docRef, { remindAt: null }).catch(err => {
-                        console.error("Error clearing remindAt:", err);
+                    updateDoc(docRef, { reminderSent: true }).catch(err => {
+                        console.error("Error setting reminderSent:", err);
                     });
                 }
             });
