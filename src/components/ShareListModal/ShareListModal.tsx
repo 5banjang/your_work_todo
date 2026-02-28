@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { formatTimeRemaining } from "@/lib/utils";
@@ -14,8 +15,9 @@ interface ShareListModalProps {
 
 export default function ShareListModal({ onClose }: ShareListModalProps) {
     const { todos, updateTodo } = useTodos();
+    const { t: tr } = useLanguage();
     const [copied, setCopied] = useState(false);
-    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || tr("notification.someone") : tr("notification.someone");
 
     const myTodos = useMemo(() => {
         return todos.filter((t) => {
@@ -67,10 +69,10 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         const shareUrl = `${window.location.origin}/share/batch/${batchIdToken}`;
 
         const lines: string[] = [];
-        lines.push("📋 할 일 리스트 공유");
-        lines.push(`총 ${selected.length}건 (진행 중 ${selected.filter(t => t.status !== "done").length}건)`);
+        lines.push(tr("shareList.shareHeader"));
+        lines.push(`${tr("shareList.total")} ${selected.length}${tr("shareList.items")} (${tr("shareList.active")} ${selected.filter(t => t.status !== "done").length}${tr("shareList.items")})`);
         lines.push("");
-        lines.push("👉 링크에서 모두 확인 및 완료하기:");
+        lines.push(tr("shareList.linkDesc"));
         lines.push(shareUrl);
 
         return lines.join("\n");
@@ -99,7 +101,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: "할 일 리스트",
+                    title: tr("shareList.shareTitle"),
                     text: shareText,
                 });
                 onClose();
@@ -136,8 +138,8 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                 >
                     {/* Header */}
                     <div className={styles.header}>
-                        <h2 className={styles.title}>📋 리스트 공유</h2>
-                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="닫기">
+                        <h2 className={styles.title}>{tr("shareList.title")}</h2>
+                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label={tr("settings.close")}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                                 <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
                             </svg>
@@ -154,7 +156,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                             <span className={`${styles.checkbox} ${selectedIds.size === todos.length ? styles.checked : ""}`}>
                                 {selectedIds.size === todos.length ? "✓" : ""}
                             </span>
-                            전체 선택 ({selectedIds.size}/{todos.length})
+                            {tr("shareList.selectAll")} ({selectedIds.size}/{todos.length})
                         </button>
                     </div>
 
@@ -163,7 +165,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                         {/* Active todos */}
                         {activeTodos.length > 0 && (
                             <div className={styles.section}>
-                                <p className={styles.sectionLabel}>진행 중 ({activeTodos.length})</p>
+                                <p className={styles.sectionLabel}>{tr("shareList.inProgress")} ({activeTodos.length})</p>
                                 {activeTodos.map((todo) => (
                                     <button
                                         key={todo.id}
@@ -179,7 +181,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                                             <span className={styles.todoMeta}>
                                                 {todo.deadline
                                                     ? format(todo.deadline, "M/d a h:mm", { locale: ko })
-                                                    : "마감일 없음"
+                                                    : tr("shareList.noDeadline")
                                                 }
                                                 {todo.assigneeName && ` · ${todo.assigneeName}`}
                                             </span>
@@ -192,7 +194,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                         {/* Done todos */}
                         {doneTodos.length > 0 && (
                             <div className={styles.section}>
-                                <p className={styles.sectionLabel}>완료 ({doneTodos.length})</p>
+                                <p className={styles.sectionLabel}>{tr("shareList.done")} ({doneTodos.length})</p>
                                 {doneTodos.map((todo) => (
                                     <button
                                         key={todo.id}
@@ -221,7 +223,7 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                                 <polyline points="16,6 12,2 8,6" strokeLinecap="round" strokeLinejoin="round" />
                                 <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
                             </svg>
-                            {copied ? "복사 완료!" : "공유하기"}
+                            {copied ? tr("shareList.copiedDone") : tr("shareList.share")}
                         </button>
                     </div>
                 </motion.div>

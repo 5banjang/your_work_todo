@@ -2,25 +2,26 @@
 
 import React from "react";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { getUrgencyLevel, formatTimeRemaining } from "@/lib/utils";
 import type { TodoStatus } from "@/types/todo";
 import styles from "./KanbanBoard.module.css";
 
-const COLUMNS: { status: TodoStatus; label: string; color: string }[] = [
-    { status: "todo", label: "할 일", color: "blue" },
-    { status: "in_progress", label: "진행 중", color: "amber" },
-    { status: "waiting", label: "상대방 완료 대기", color: "purple" },
-    { status: "done", label: "최종 완료", color: "green" },
-];
-
 export default function KanbanBoard() {
     const { todos, moveTodoStatus, clearCompletedTodos } = useTodos();
+    const { t } = useLanguage();
 
-    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+    const COLUMNS: { status: TodoStatus; label: string; color: string }[] = [
+        { status: "todo", label: t("kanban.todo"), color: "blue" },
+        { status: "in_progress", label: t("kanban.progress"), color: "amber" },
+        { status: "waiting", label: t("kanban.waitingFull"), color: "purple" },
+        { status: "done", label: t("kanban.doneFull"), color: "green" },
+    ];
+
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || t("notification.someone") : t("notification.someone");
     const { user } = useTodos();
 
     const myTodos = todos.filter((t) => {
-        // 구글 로그인한 경우: Firestore에서 `userId`로 쿼리해 온 데이터이므로 기본적으로 모두 내 데이터입니다.
         if (user) {
             const sentOutbox = t.createdBy === myNickname && !!t.batchId;
             const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
@@ -78,7 +79,7 @@ export default function KanbanBoard() {
                             {col.status === 'done' && columnTodos.length > 0 && (
                                 <button
                                     onClick={() => {
-                                        if (window.confirm("완료된 모든 항목을 영구적으로 삭제하시겠습니까?")) {
+                                        if (window.confirm(t("list.confirmClear"))) {
                                             clearCompletedTodos();
                                         }
                                     }}
@@ -95,7 +96,7 @@ export default function KanbanBoard() {
                                     }}
                                     onMouseOver={(e) => e.currentTarget.style.opacity = "1"}
                                     onMouseOut={(e) => e.currentTarget.style.opacity = "0.8"}
-                                    title="완료 항목 모두 지우기"
+                                    title={t("kanban.clearTitle")}
                                 >
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -107,7 +108,7 @@ export default function KanbanBoard() {
                         <div className={styles.columnBody}>
                             {columnTodos.map((todo) => {
                                 const urgency = getUrgencyLevel(todo.deadline);
-                                const timeText = formatTimeRemaining(todo.deadline);
+                                const timeText = formatTimeRemaining(todo.deadline, t);
                                 return (
                                     <div
                                         key={todo.id}

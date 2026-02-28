@@ -18,28 +18,49 @@ export function getUrgencyLevel(deadline: Date | null): UrgencyLevel {
 }
 
 /**
- * Format remaining time as a human-readable Korean string.
+ * Format remaining time as a human-readable localized string.
+ * @param deadline - The deadline date
+ * @param t - Translation function (optional, falls back to Korean)
  */
-export function formatTimeRemaining(deadline: Date | null): string {
+export function formatTimeRemaining(deadline: Date | null, t?: (key: string) => string): string {
     if (!deadline) return "";
 
-    if (isPast(deadline)) return "마감 초과";
+    const tr = t || ((key: string) => {
+        const fallback: Record<string, string> = {
+            "time.overdue": "마감 초과",
+            "time.soon": "곧 마감",
+            "time.minutesLeft": "분 남음",
+            "time.hoursMinutesLeft": "시간 {m}분 남음",
+            "time.hoursLeft": "시간 남음",
+            "time.daysHoursLeft": "일 {h}시간 남음",
+            "time.daysLeft": "일 남음",
+        };
+        return fallback[key] || key;
+    });
+
+    if (isPast(deadline)) return tr("time.overdue");
 
     const now = new Date();
     const mins = differenceInMinutes(deadline, now);
 
-    if (mins < 1) return "곧 마감";
-    if (mins < 60) return `${mins}분 남음`;
+    if (mins < 1) return tr("time.soon");
+    if (mins < 60) return `${mins}${tr("time.minutesLeft")}`;
 
     const hrs = differenceInHours(deadline, now);
     if (hrs < 24) {
         const remainMins = mins % 60;
-        return remainMins > 0 ? `${hrs}시간 ${remainMins}분 남음` : `${hrs}시간 남음`;
+        if (remainMins > 0) {
+            return `${hrs}${tr("time.hoursMinutesLeft").replace("{m}", String(remainMins))}`;
+        }
+        return `${hrs}${tr("time.hoursLeft")}`;
     }
 
     const days = Math.floor(hrs / 24);
     const remainHrs = hrs % 24;
-    return remainHrs > 0 ? `${days}일 ${remainHrs}시간 남음` : `${days}일 남음`;
+    if (remainHrs > 0) {
+        return `${days}${tr("time.daysHoursLeft").replace("{h}", String(remainHrs))}`;
+    }
+    return `${days}${tr("time.daysLeft")}`;
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./AppSettingsModal.module.css";
 
 interface AppSettingsModalProps {
@@ -9,6 +10,7 @@ interface AppSettingsModalProps {
 }
 
 export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
+    const { t } = useLanguage();
     const [nickname, setNickname] = useState("");
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [vibrateEnabled, setVibrateEnabled] = useState(true);
@@ -54,8 +56,8 @@ export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.header}>
-                    <h2 className={styles.title}>앱 설정</h2>
-                    <button className={styles.closeBtn} onClick={onClose} aria-label="닫기">
+                    <h2 className={styles.title}>{t("settings.appTitle")}</h2>
+                    <button className={styles.closeBtn} onClick={onClose} aria-label={t("settings.close")}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                             <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
                         </svg>
@@ -69,12 +71,12 @@ export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                             </svg>
-                            내 닉네임 (알림 표시용)
+                            {t("settings.nicknameLabel")}
                         </label>
                         <input
                             type="text"
                             className={styles.input}
-                            placeholder="예: 승근, 홍길동"
+                            placeholder={t("settings.nicknamePlaceholder")}
                             value={nickname}
                             onChange={handleNicknameChange}
                             maxLength={20}
@@ -87,11 +89,11 @@ export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                             </svg>
-                            알림 상세 옵션
+                            {t("settings.notifOptions")}
                         </label>
 
                         <div className={styles.toggleRow}>
-                            <span className={styles.toggleLabel}>소리 알림</span>
+                            <span className={styles.toggleLabel}>{t("settings.soundNotif")}</span>
                             <label>
                                 <input type="checkbox" className={styles.toggleInput} checked={soundEnabled} onChange={toggleSound} />
                                 <div className={styles.toggleTrack}>
@@ -101,7 +103,7 @@ export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
                         </div>
 
                         <div className={styles.toggleRow}>
-                            <span className={styles.toggleLabel}>진동 알림</span>
+                            <span className={styles.toggleLabel}>{t("settings.vibrateNotif")}</span>
                             <label>
                                 <input type="checkbox" className={styles.toggleInput} checked={vibrateEnabled} onChange={toggleVibrate} />
                                 <div className={styles.toggleTrack}>

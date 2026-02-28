@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Todo, ChecklistItem } from "@/types/todo";
 import { generateId } from "@/lib/utils";
 import { format } from "date-fns";
@@ -16,6 +17,7 @@ interface ShareModalProps {
 
 export default function ShareModal({ todo, onClose }: ShareModalProps) {
     const { updateTodo, deleteTodo } = useTodos();
+    const { t } = useLanguage();
     const initDate = todo.deadline ? new Date(todo.deadline) : new Date();
 
     const [targetYear, setTargetYear] = useState(initDate.getFullYear().toString());
@@ -72,11 +74,11 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
 
     const handleCopyLink = useCallback(() => {
         const url = `${window.location.origin}/share/${todo.id}`;
-        const text = `[할 일 요청]\n${todo.title}\n\n👉 링크에서 확인 및 완료하기:\n${url}`;
+        const text = `[${t("shareList.shareTitle")}]\n${todo.title}\n\n${t("shareList.linkDesc")}\n${url}`;
 
         if (navigator.share) {
             navigator.share({
-                title: "할 일 요청",
+                title: t("shareList.shareTitle"),
                 text: text,
             }).catch(() => { });
         } else {
@@ -106,8 +108,8 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                 >
                     {/* Header */}
                     <div className={styles.header}>
-                        <h2 className={styles.title}>작업 설정</h2>
-                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="닫기">
+                        <h2 className={styles.title}>{t("modal.taskSettings")}</h2>
+                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label={t("settings.close")}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                                 <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
                             </svg>
@@ -129,42 +131,42 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                                     <rect x="3" y="4" width="18" height="18" rx="2" />
                                     <path d="M16 2v4M8 2v4M3 10h18" />
                                 </svg>
-                                마감일
+                                {t("modal.deadline")}
                             </label>
                             <div className={styles.dateRow}>
                                 <select value={targetYear} onChange={(e) => setTargetYear(e.target.value)} className={styles.selectSmall}>
                                     {[0, 1, 2].map((i) => {
                                         const y = (new Date().getFullYear() + i).toString();
-                                        return <option key={y} value={y}>{y}년</option>;
+                                        return <option key={y} value={y}>{y}{t("date.year")}</option>;
                                     })}
                                 </select>
                                 <select value={targetMonth} onChange={(e) => setTargetMonth(e.target.value)} className={styles.selectSmall}>
                                     {Array.from({ length: 12 }, (_, i) => {
                                         const m = (i + 1).toString().padStart(2, "0");
-                                        return <option key={m} value={m}>{i + 1}월</option>;
+                                        return <option key={m} value={m}>{i + 1}{t("date.month")}</option>;
                                     })}
                                 </select>
                                 <select value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className={styles.selectSmall}>
                                     {Array.from({ length: 31 }, (_, i) => {
                                         const d = (i + 1).toString().padStart(2, "0");
-                                        return <option key={d} value={d}>{i + 1}일</option>;
+                                        return <option key={d} value={d}>{i + 1}{t("date.day")}</option>;
                                     })}
                                 </select>
                             </div>
                             <div className={styles.dateRow}>
                                 <select value={timeFormat} onChange={(e) => setTimeFormat(e.target.value)} className={styles.selectSmall}>
-                                    <option value="AM">오전</option>
-                                    <option value="PM">오후</option>
+                                    <option value="AM">{t("date.am")}</option>
+                                    <option value="PM">{t("date.pm")}</option>
                                 </select>
                                 <select value={targetHour} onChange={(e) => setTargetHour(e.target.value)} className={styles.selectSmall}>
                                     {Array.from({ length: 12 }, (_, i) => {
                                         const h = (i === 0 ? 12 : i).toString().padStart(2, "0");
-                                        return <option key={h} value={h}>{h}시</option>;
+                                        return <option key={h} value={h}>{h}{t("date.hour")}</option>;
                                     })}
                                 </select>
                                 <select value={targetMinute} onChange={(e) => setTargetMinute(e.target.value)} className={styles.selectSmall}>
                                     {["00", "10", "20", "30", "40", "50"].map((m) => (
-                                        <option key={m} value={m}>{m}분</option>
+                                        <option key={m} value={m}>{m}{t("date.minute")}</option>
                                     ))}
                                 </select>
                             </div>
@@ -177,18 +179,18 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 6v6l4 2" strokeLinecap="round" />
                                 </svg>
-                                리마인드
+                                {t("modal.remind")}
                             </label>
                             <select
                                 value={remindMinutes}
                                 onChange={(e) => setRemindMinutes(e.target.value)}
                                 className={styles.select}
                             >
-                                <option value="10">10분 전</option>
-                                <option value="30">30분 전</option>
-                                <option value="60">1시간 전</option>
-                                <option value="180">3시간 전</option>
-                                <option value="1440">1일 전</option>
+                                <option value="10">{t("remind.10min")}</option>
+                                <option value="30">{t("remind.30min")}</option>
+                                <option value="60">{t("remind.1hour")}</option>
+                                <option value="180">{t("remind.3hour")}</option>
+                                <option value="1440">{t("remind.1day")}</option>
                             </select>
                         </div>
 
@@ -205,20 +207,20 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                                 <path d="M16 2v4M8 2v4M3 10h18" />
                                 <circle cx="12" cy="14" r="2" />
                             </svg>
-                            오늘
+                            {t("modal.today")}
                         </button>
                         <button className={`${styles.actionBtn} ${styles.btnDanger}`} onClick={handleDelete} type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                                 <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            삭제
+                            {t("modal.delete")}
                         </button>
                         <button className={`${styles.actionBtn} ${styles.btnNeutral}`} onClick={handleCopyLink} type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                             </svg>
-                            {copied ? "복사됨" : "공유"}
+                            {copied ? t("modal.copied") : t("modal.share")}
                         </button>
                         <button className={`${styles.actionBtn} ${styles.btnSuccess}`} onClick={handleSave} type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
@@ -226,7 +228,7 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                                 <polyline points="17 21 17 13 7 13 7 21" />
                                 <polyline points="7 3 7 8 15 8" />
                             </svg>
-                            저장
+                            {t("modal.save")}
                         </button>
                     </div>
                 </motion.div>

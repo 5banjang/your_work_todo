@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
 import { getUrgencyLevel, formatTimeRemaining } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Todo } from "@/types/todo";
 import styles from "./TodoCard.module.css";
 
@@ -16,16 +17,17 @@ interface TodoCardProps {
 
 export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }: TodoCardProps) {
     const { completeTodo, deleteTodo, updateTodo, uncompleteTodo } = useTodos();
+    const { t } = useLanguage();
     const [timeText, setTimeText] = useState("");
     const urgency = getUrgencyLevel(todo.deadline);
 
     // Update timer text every 30s
     useEffect(() => {
-        const update = () => setTimeText(formatTimeRemaining(todo.deadline));
+        const update = () => setTimeText(formatTimeRemaining(todo.deadline, t));
         update();
         const interval = setInterval(update, 30000);
         return () => clearInterval(interval);
-    }, [todo.deadline]);
+    }, [todo.deadline, t]);
 
     const handleDelete = () => {
         deleteTodo(todo.id);
@@ -53,7 +55,7 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                 <div className={styles.content}>
                     <span className={styles.titleDone}>{todo.title}</span>
                     <div className={styles.doneActions}>
-                        <span className={styles.doneLabel}>✓ 완료</span>
+                        <span className={styles.doneLabel}>{t("card.doneLabel")}</span>
                         {!readOnly && (
                             <button
                                 className={styles.undoBtn}
@@ -62,14 +64,14 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                                     if (navigator.vibrate) navigator.vibrate(30);
                                 }}
                                 type="button"
-                                aria-label="되돌리기"
-                                title="할 일로 되돌리기"
+                                aria-label={t("card.undo")}
+                                title={t("card.undo")}
                             >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                                     <path d="M3 12a9 9 0 1 1 9 9" strokeLinecap="round" />
                                     <path d="M3 21v-6h6" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
-                                되돌리기
+                                {t("card.undo")}
                             </button>
                         )}
                         <button
@@ -80,13 +82,13 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                                 handleDelete();
                             }}
                             type="button"
-                            aria-label="삭제"
-                            title="삭제"
+                            aria-label={t("card.delete")}
+                            title={t("card.delete")}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12">
                                 <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            삭제
+                            {t("card.delete")}
                         </button>
                     </div>
                 </div>
@@ -138,7 +140,7 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                                 <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" strokeLinecap="round" strokeLinejoin="round" />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
-                            설정
+                            {t("card.settings")}
                         </button>
                     )}
 
@@ -146,7 +148,7 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                             <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        회수(삭제)
+                        {t("card.delete")}
                     </button>
 
                     {!readOnly && (
@@ -154,7 +156,7 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" width="14" height="14">
                                 <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            완료
+                            {t("card.complete")}
                         </button>
                     )}
                 </div>

@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./DeviceSyncModal.module.css";
 
 interface DeviceSyncModalProps {
@@ -11,6 +12,7 @@ interface DeviceSyncModalProps {
 
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
     const { user, loginWithGoogle, logout } = useTodos();
+    const { t } = useLanguage();
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -27,10 +29,9 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                     </svg>
                 </button>
 
-                <h2 className={styles.title}>기기 동기화 계정</h2>
+                <h2 className={styles.title}>{t("sync.accountTitle")}</h2>
                 <p className={styles.subtitle}>
-                    구글 계정으로 로그인하시면, PC와 모바일 어디서나<br />
-                    작성하신 모든 할 일이 완벽하게 실시간 동기화됩니다.
+                    {t("sync.desc")}
                 </p>
 
                 <div className={styles.content}>
@@ -48,7 +49,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                     width: "100%",
                                     maxWidth: "300px"
                                 }}>
-                                    <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "8px" }}>현재 로그인된 계정</div>
+                                    <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "8px" }}>{t("sync.currentAccount")}</div>
                                     <div style={{ fontWeight: "bold" }}>{user.email || user.displayName}</div>
                                 </div>
                                 <button
@@ -65,7 +66,7 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                         cursor: "pointer"
                                     }}
                                 >
-                                    로그아웃
+                                    {t("sync.logout")}
                                 </button>
                             </div>
                         ) : (
@@ -94,12 +95,12 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                 </svg>
-                                구글로 시작하기 (동기화)
+                                {t("sync.loginGoogle")}
                             </button>
                         )}
 
                         <p className={styles.instruction} style={{ marginTop: "16px", fontSize: "0.85rem", opacity: 0.8, textAlign: "center", lineHeight: "1.5" }}>
-                            로그인 없이 생성한 기존 데이터는<br />로그인 즉시 해당 계정으로 안전하게 귀속됩니다.
+                            {t("sync.loginNote")}
                         </p>
 
                     </div>

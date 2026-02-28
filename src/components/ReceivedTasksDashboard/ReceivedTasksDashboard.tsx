@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
+import { useLanguage } from "@/context/LanguageContext";
 import type { Todo } from "@/types/todo";
 import styles from "./ReceivedTasksDashboard.module.css";
 import TodoCard from "@/components/TodoCard/TodoCard";
@@ -14,14 +15,15 @@ interface ReceivedTasksDashboardProps {
 
 export default function ReceivedTasksDashboard({ isOpen, onClose }: ReceivedTasksDashboardProps) {
     const { todos } = useTodos();
-    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+    const { t: tr } = useLanguage();
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || tr("notification.someone") : tr("notification.someone");
 
     // Get all tasks that are assigned to ME, but NOT created by me (unless it's a batch share I accepted from myself for some reason, but mainly it's tracking Inbox)
     const myReceivedTasks = todos.filter(t => t.assigneeName === myNickname && t.createdBy !== myNickname);
 
     // Group by sender (createdBy)
     const groupedBySender = myReceivedTasks.reduce((acc, t) => {
-        const sender = t.createdBy || "누군가";
+        const sender = t.createdBy || tr("notification.someone");
         if (!acc[sender]) acc[sender] = [];
         acc[sender].push(t);
         return acc;
@@ -61,9 +63,9 @@ export default function ReceivedTasksDashboard({ isOpen, onClose }: ReceivedTask
                             ) : (
                                 <span className={styles.icon}>📥</span>
                             )}
-                            {selectedSender ? `${selectedSender}님이 보낸 일` : "수신함 (받은 일)"}
+                            {selectedSender ? `${selectedSender}${tr("received.fromSender")}` : tr("received.inboxTitle")}
                         </h2>
-                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="닫기">
+                        <button className={styles.closeBtn} onClick={onClose} type="button" aria-label={tr("settings.close")}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                                 <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
                             </svg>
@@ -75,8 +77,8 @@ export default function ReceivedTasksDashboard({ isOpen, onClose }: ReceivedTask
                             senders.length === 0 ? (
                                 <div className={styles.emptyState}>
                                     <div className={styles.emptyIcon}>📭</div>
-                                    <p>아직 다른 사람에게서 받은 할 일이 없습니다.</p>
-                                    <small>누군가 공유 링크를 통해 회원님을 담당자로 지정하면 이곳에 나타납니다.</small>
+                                    <p>{tr("received.emptyMsg")}</p>
+                                    <small>{tr("received.emptyHint")}</small>
                                 </div>
                             ) : (
                                 <div className={styles.senderGrid}>
@@ -89,7 +91,7 @@ export default function ReceivedTasksDashboard({ isOpen, onClose }: ReceivedTask
                                             <button key={sender} className={styles.senderCard} onClick={() => setSelectedSender(sender)}>
                                                 <div className={styles.senderNameRow}>
                                                     <span className={styles.senderName}>{sender}</span>
-                                                    <span className={styles.taskCount}>{doneCount} / {tasks.length} 개 완료</span>
+                                                    <span className={styles.taskCount}>{doneCount} / {tasks.length} {tr("delegation.progress")}</span>
                                                 </div>
                                                 <div className={styles.progressBarBg}>
                                                     <div className={styles.progressBarFill} style={{ width: `${progress}%` }} />

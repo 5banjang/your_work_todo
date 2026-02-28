@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./NicknameModal.module.css";
 
 interface NicknameModalProps {
@@ -11,6 +12,7 @@ interface NicknameModalProps {
 
 export default function NicknameModal({ isOpen, onSave }: NicknameModalProps) {
     const [nickname, setNickname] = useState("");
+    const { t } = useLanguage();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,10 +37,10 @@ export default function NicknameModal({ isOpen, onSave }: NicknameModalProps) {
                             <div className={styles.iconContainer}>
                                 <span>👋</span>
                             </div>
-                            <h2 className={styles.title}>환영합니다!</h2>
+                            <h2 className={styles.title}>{t("welcome.title")}</h2>
                             <p className={styles.description}>
-                                할 일을 완료했을 때 일행에게 전송될<br />
-                                <strong>본인의 이름(닉네임)</strong>을 먼저 입력해주세요.
+                                {t("welcome.desc")}<br />
+                                <strong>{t("welcome.descBold")}</strong>{t("welcome.descEnd")}
                             </p>
 
                             <form onSubmit={handleSubmit} className={styles.form}>
@@ -46,7 +48,7 @@ export default function NicknameModal({ isOpen, onSave }: NicknameModalProps) {
                                     type="text"
                                     value={nickname}
                                     onChange={(e) => setNickname(e.target.value)}
-                                    placeholder="예: 홍길동, 아빠, 팀장님"
+                                    placeholder={t("welcome.placeholder")}
                                     className={styles.input}
                                     autoFocus
                                     maxLength={12}
@@ -56,7 +58,7 @@ export default function NicknameModal({ isOpen, onSave }: NicknameModalProps) {
                                     className={styles.submitBtn}
                                     disabled={!nickname.trim()}
                                 >
-                                    시작하기
+                                    {t("welcome.start")}
                                 </button>
                             </form>
                         </div>
