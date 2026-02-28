@@ -679,6 +679,16 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
         const completedTodos = todos.filter(t => {
             if (t.status !== "done") return false;
+
+            if (user) {
+                // When logged in, Firestore query already filters by userId.
+                // Just exclude delegated items (same as TodoList display logic).
+                const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+                const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+                return !sentOutbox && !manuallyDelegated;
+            }
+
+            // Guest mode: filter by nickname involvement
             const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
             if (!involvesMe) return false;
             const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
@@ -700,7 +710,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         } else {
             setTodos((prev) => prev.filter(t => t.status !== "done"));
         }
-    }, [todos]);
+    }, [todos, user]);
 
     const reorderTodos = useCallback(async (activeId: string, overId: string) => {
         const oldIndex = todos.findIndex((t) => t.id === activeId);
