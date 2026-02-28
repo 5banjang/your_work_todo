@@ -51,7 +51,7 @@ export default function BottomNav({ onGuideClick }: BottomNavProps) {
                 <span>{t("nav.guide")}</span>
             </button>
             <span style={{ position: "absolute", bottom: "4px", left: "8px", fontSize: "9px", color: "rgba(255,255,255,0.2)" }}>
-                v3.5.1
+                v3.5.2
             </span>
         </nav>
     );
