@@ -30,8 +30,8 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
                 const message = {
                     data: {
                         type: "TODO_COMPLETED",
-                        title: "할 일 완료 알림",
-                        body: `${completedBy}님이 '${todoTitle}' 할 일을 완료했습니다!`,
+                        title: `✅ ${completedBy}님이 할 일을 완료했습니다`,
+                        body: `'${todoTitle}' 할 일이 완료 처리되었습니다.`,
                         completedBy: completedBy,
                         todoTitle: todoTitle,
                         url: "/"
@@ -104,11 +104,24 @@ exports.checkDeadlineReminders = onSchedule("every 1 minutes", async () => {
         if (tokens.length === 0) return null;
 
         for (const todo of todosToRemind) {
+            // Calculate remaining minutes until deadline
+            let remainStr = "마감 시간이 곧 도래합니다!";
+            if (todo.deadline) {
+                const deadlineMs = todo.deadline.toDate ? todo.deadline.toDate().getTime() : new Date(todo.deadline).getTime();
+                const diffMs = deadlineMs - Date.now();
+                const diffMin = Math.max(0, Math.round(diffMs / 60000));
+                if (diffMin > 0) {
+                    remainStr = `마감까지 ${diffMin}분 남았습니다`;
+                } else {
+                    remainStr = "마감 시간이 지났습니다";
+                }
+            }
+
             const message = {
                 data: {
                     type: "DEADLINE_REMINDER",
-                    title: "⏰ 마감 임박 알림",
-                    body: `'${todo.title}' 마감 시간이 곧 도래합니다!`,
+                    title: `⏰ ${todo.title}`,
+                    body: remainStr,
                     todoTitle: todo.title || "",
                     todoId: todo.id,
                     url: "/"
@@ -190,8 +203,8 @@ exports.checkDeadlineArrived = onSchedule("every 1 minutes", async () => {
             const message = {
                 data: {
                     type: "DEADLINE_ARRIVED",
-                    title: "🔴 마감 시간 도달",
-                    body: `'${todo.title}' 의 마감 시간이 지났습니다!`,
+                    title: `🔴 ${todo.title}`,
+                    body: "이 할 일이 완료되어야 할 시간이 지났습니다!",
                     todoTitle: todo.title || "",
                     todoId: todo.id,
                     url: "/"

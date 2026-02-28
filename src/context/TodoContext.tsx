@@ -233,10 +233,21 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 // Play sound
                 playIfSoundEnabled();
 
-                // Build notification
+                // Build notification with remaining time info
                 const vibrateOn = localStorage.getItem("your-todo-vibrate") !== "false";
-                const title = "⏰ 마감 임박 알림";
-                const body = `'${t.title}' 마감 시간이 곧 도래합니다!`;
+                let remainMinStr = "";
+                if (t.deadline) {
+                    const deadlineTime = t.deadline instanceof Date ? t.deadline : new Date(t.deadline);
+                    const diffMs = deadlineTime.getTime() - now.getTime();
+                    const diffMin = Math.max(0, Math.round(diffMs / 60000));
+                    if (diffMin > 0) {
+                        remainMinStr = `마감까지 ${diffMin}분 남았습니다`;
+                    } else {
+                        remainMinStr = "마감 시간이 지났습니다";
+                    }
+                }
+                const title = `⏰ ${t.title}`;
+                const body = remainMinStr || "마감 시간이 곧 도래합니다!";
                 const options: any = {
                     body,
                     icon: "/icons/icon-192.png",
