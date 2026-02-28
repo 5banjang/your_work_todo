@@ -59,6 +59,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 
     const prevTodosRef = React.useRef<Todo[]>([]);
     const nicknameRef = React.useRef("");
+    const remindedIdsRef = React.useRef<Set<string>>(new Set());
 
     useEffect(() => {
         const syncNickname = () => {
@@ -204,6 +205,79 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         });
 
         prevTodosRef.current = currentTodos;
+    }, [todos, isLoaded]);
+
+    // ⏰ Deadline reminder: check every 30s if any todo's remindAt has passed
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        const checkReminders = () => {
+            const now = new Date();
+            const pushActive = typeof window !== "undefined"
+                ? localStorage.getItem("your-todo-push-active") !== "false"
+                : false;
+            if (!pushActive) return;
+
+            todos.forEach(t => {
+                if (t.status === "done") return;
+                if (!t.remindAt) return;
+                if (remindedIdsRef.current.has(t.id)) return;
+
+                const remindTime = t.remindAt instanceof Date ? t.remindAt : new Date(t.remindAt);
+                if (isNaN(remindTime.getTime())) return;
+                if (remindTime > now) return;
+
+                // Mark as reminded to prevent duplicates
+                remindedIdsRef.current.add(t.id);
+
+                // Play sound
+                playIfSoundEnabled();
+
+                // Build notification
+                const vibrateOn = localStorage.getItem("your-todo-vibrate") !== "false";
+                const title = "⏰ 마감 임박 알림";
+                const body = `'${t.title}' 마감 시간이 곧 도래합니다!`;
+                const options: any = {
+                    body,
+                    icon: "/icons/icon-192.png",
+                    badge: "/icons/icon-192.png",
+                    vibrate: vibrateOn ? [200, 100, 200, 100, 200] : undefined,
+                    tag: `reminder-${t.id}`,
+                    silent: true,
+                };
+
+                if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                    try {
+                        navigator.serviceWorker.ready.then((reg) => {
+                            if (reg) {
+                                reg.showNotification(title, options).catch(() => {
+                                    new Notification(title, options);
+                                });
+                            } else {
+                                new Notification(title, options);
+                            }
+                        }).catch(() => {
+                            new Notification(title, options);
+                        });
+                    } catch (e) {
+                        console.error("Reminder Notification Error:", e);
+                    }
+                }
+
+                // Clear remindAt in Firestore to prevent re-triggering on reload
+                if (isFirebaseConfigured() && db) {
+                    const docRef = doc(db!, "todos", t.id);
+                    updateDoc(docRef, { remindAt: null }).catch(err => {
+                        console.error("Error clearing remindAt:", err);
+                    });
+                }
+            });
+        };
+
+        // Run immediately on load, then every 30 seconds
+        checkReminders();
+        const interval = setInterval(checkReminders, 30_000);
+        return () => clearInterval(interval);
     }, [todos, isLoaded]);
 
     const requestPushPermission = async () => {
