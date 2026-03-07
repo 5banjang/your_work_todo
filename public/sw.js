@@ -1,4 +1,4 @@
-const CACHE_NAME = "your-todo-v2";
+const CACHE_NAME = "your-todo-v3";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 // Install: cache shell files
@@ -51,29 +51,8 @@ self.addEventListener("fetch", (event) => {
     );
 });
 
-// Push notifications (for FCM & future geofence alerts)
-self.addEventListener("push", (event) => {
-    let data = {};
-    try {
-        data = event.data ? event.data.json() : {};
-    } catch (e) {
-        console.error("Push data parsing failed", e);
-    }
-
-    // Support both direct data payloads and FCM notification object
-    const title = data.notification?.title || data.title || "Your To-Do";
-    const body = data.notification?.body || data.body || "새로운 알림이 있습니다";
-
-    const options = {
-        body: body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        vibrate: [200, 100, 200, 100, 200], // Stronger vibration pattern
-        data: { url: data.data?.url || data.url || "/" },
-    };
-
-    event.waitUntil(self.registration.showNotification(title, options));
-});
+// Push notifications are handled by firebase-messaging-sw.js
+// Do NOT add a push handler here to avoid conflicts with FCM's data-only message handling
 
 // Notification click
 self.addEventListener("notificationclick", (event) => {

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { MainContent } from "@/app/page";
 import { TodoProvider } from "@/context/TodoContext";
 import NicknameModal from "@/components/NicknameModal/NicknameModal";
+import { useShareNickname } from "@/hooks/useShareNickname";
 import styles from "./share.module.css";
 import { db } from "@/lib/firebase";
 import { updateDoc, doc, getDoc } from "firebase/firestore";
@@ -12,22 +13,7 @@ import { updateDoc, doc, getDoc } from "firebase/firestore";
 function SingleShareContent() {
     const params = useParams();
     const todoId = params.id as string;
-    const [myNickname, setMyNickname] = useState<string | null>(null);
-    const [showNicknameModal, setShowNicknameModal] = useState(false);
-
-    useEffect(() => {
-        try {
-            const nickname = localStorage.getItem("your-todo-nickname");
-            if (nickname) {
-                setMyNickname(nickname);
-            } else {
-                setShowNicknameModal(true);
-            }
-        } catch (err) {
-            console.warn("localStorage access denied", err);
-            setShowNicknameModal(true);
-        }
-    }, []);
+    const { myNickname, showNicknameModal, handleNicknameSave } = useShareNickname();
 
     // Perform bindings in the background. If a task isn't assigned, assign to this user.
     useEffect(() => {
@@ -52,12 +38,6 @@ function SingleShareContent() {
         };
         applyBinding();
     }, [todoId, myNickname]);
-
-    const handleNicknameSave = (name: string) => {
-        localStorage.setItem("your-todo-nickname", name);
-        setMyNickname(name);
-        setShowNicknameModal(false);
-    };
 
     if (showNicknameModal && !myNickname) {
         return <NicknameModal isOpen={true} onSave={handleNicknameSave} />;

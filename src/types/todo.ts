@@ -8,8 +8,6 @@ export interface ChecklistItem {
     completed: boolean;
 }
 
-
-
 export interface Todo {
     id: string;
     title: string;
@@ -28,7 +26,6 @@ export interface Todo {
     shareLink?: string;
     batchId?: string;
     checklist: ChecklistItem[];
-
 
     // Metadata
     syncId?: string;
