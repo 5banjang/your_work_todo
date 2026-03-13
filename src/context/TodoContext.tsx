@@ -108,7 +108,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                         updatedAt: new Date()
                     }, { merge: true });
                     setFcmToken(token);
-                    console.log("FCM token auto-registered:", token.substring(0, 20) + "...");
+                    console.log(`FCM token registered for [${nickname}]:`, token.substring(0, 20) + "...");
                 }
             } catch (err) {
                 console.error("Auto FCM token registration failed:", err);
