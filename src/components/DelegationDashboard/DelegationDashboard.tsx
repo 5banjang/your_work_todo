@@ -11,11 +11,15 @@ interface DelegationDashboardProps {
 }
 
 export default function DelegationDashboard({ isOpen, onClose }: DelegationDashboardProps) {
-    const { todos } = useTodos();
+    const { todos, user } = useTodos();
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
     // 내가 만들고 다른 사람에게 위임했거나 배치 공유한 할 일
-    const myDelegatedTasks = todos.filter(t => t.createdBy === myNickname && (t.batchId || (t.assigneeName && t.assigneeName !== myNickname)));
+    const myDelegatedTasks = todos.filter(t => {
+        const isCreatedByMe = t.createdBy === myNickname || (user && t.userId === user.uid);
+        const isShared = t.batchId || (t.assigneeName && t.assigneeName !== myNickname);
+        return isCreatedByMe && isShared;
+    });
 
     // 담당자별 그룹핑
     const groupedByAssignee = myDelegatedTasks.reduce((acc, t) => {

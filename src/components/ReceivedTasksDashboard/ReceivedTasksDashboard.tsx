@@ -11,11 +11,15 @@ interface ReceivedTasksDashboardProps {
 }
 
 export default function ReceivedTasksDashboard({ isOpen, onClose }: ReceivedTasksDashboardProps) {
-    const { todos } = useTodos();
+    const { todos, user } = useTodos();
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
     // 내가 받은 할 일 (다른 사람이 만들고 나에게 배정된 것)
-    const myReceivedTasks = todos.filter(t => t.assigneeName === myNickname && t.createdBy !== myNickname);
+    const myReceivedTasks = todos.filter(t => {
+        const isForMe = t.assigneeName === myNickname;
+        const isNotCreatedByMe = user ? t.userId !== user.uid : t.createdBy !== myNickname;
+        return isForMe && isNotCreatedByMe;
+    });
 
     // 보낸 사람별 그룹핑
     const groupedBySender = myReceivedTasks.reduce((acc, t) => {

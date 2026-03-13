@@ -119,10 +119,29 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         if (isFirebaseConfigured()) {
             ensureAnonymousLogin();
             if (auth) {
-                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
                     // Ignore anonymous users in this `user` state to treat them as guests UI-wise
                     if (currentUser && !currentUser.isAnonymous) {
                         setUser(currentUser);
+                        // Sync nickname from cloud
+                        const userDoc = await getDocs(query(collection(db!, "users"), where("uid", "==", currentUser.uid)));
+                        if (!userDoc.empty) {
+                            const cloudNickname = userDoc.docs[0].data().nickname;
+                            if (cloudNickname) {
+                                localStorage.setItem("your-todo-nickname", cloudNickname);
+                                nicknameRef.current = cloudNickname;
+                            }
+                        } else {
+                            // First login, save existing local or default nickname to cloud
+                            const localName = localStorage.getItem("your-todo-nickname") || currentUser.displayName || "누군가";
+                            await setDoc(doc(db!, "users", currentUser.uid), {
+                                uid: currentUser.uid,
+                                nickname: localName,
+                                updatedAt: new Date()
+                            });
+                            localStorage.setItem("your-todo-nickname", localName);
+                            nicknameRef.current = localName;
+                        }
                     } else {
                         setUser(null);
                     }
@@ -483,8 +502,12 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 
     const counts = {
         personal: todos.filter(t => t.category === 'personal' && t.status !== 'done').length,
-        received: todos.filter(t => t.assigneeName === myNickname && t.status !== 'done').length,
-        sent: todos.filter(t => t.createdBy === myNickname && (t.batchId || (t.assigneeName && t.assigneeName !== myNickname)) && t.status !== 'done').length,
+        received: todos.filter(t => t.assigneeName === myNickname && t.status !== 'done' && (user ? t.userId !== user.uid : true)).length,
+        sent: todos.filter(t => {
+            const isCreatedByMe = t.createdBy === myNickname || (user && t.userId === user.uid);
+            const isShared = t.batchId || (t.assigneeName && t.assigneeName !== myNickname);
+            return isCreatedByMe && isShared && t.status !== 'done';
+        }).length,
     };
 
     const addTodo = useCallback(async (title: string, deadline: Date | null, category: 'personal' | 'shared' = 'shared') => {
