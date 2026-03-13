@@ -50,10 +50,9 @@ export default function SmartInput() {
             const title = parsed.title || text;
             const finalDeadline = parsed.deadline || getNow();
 
-            addTodo(title, finalDeadline, isPersonal ? 'personal' : 'shared');
+            addTodo(title, finalDeadline, 'shared');
 
             setValue("");
-            setIsPersonal(false);
             inputRef.current?.blur();
         },
         [value, addTodo]
@@ -84,20 +83,6 @@ export default function SmartInput() {
                     <span>{t("input.add")}</span>
                 </button>
             </div>
-            {(isFocused || value.length > 0) && (
-                <div className={styles.optionsRow}>
-                    <button
-                        type="button"
-                        className={`${styles.optionToggle} ${isPersonal ? styles.activePersonal : ""}`}
-                        onClick={() => setIsPersonal(!isPersonal)}
-                    >
-                        {isPersonal ? "🔒 내 할 일로" : "🌎 공용 할 일로"}
-                    </button>
-                    <span className={styles.optionHelp}>
-                        {isPersonal ? "작업실 모든 사람이 아닌, 나에게만 보입니다." : "이 작업실의 모든 사람이 볼 수 있습니다."}
-                    </span>
-                </div>
-            )}
         </form>
     );
 }

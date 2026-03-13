@@ -65,6 +65,9 @@ export default function TodoList({ onSettings, isSharedMode }: TodoListProps) {
         // In shared mode, we are viewing someone else's list (batchId or todoId), show everything.
         if (isSharedMode) return true;
 
+        // "My Tasks" (Personal) isolation: tasks marked as personal only show in the specific dashboard
+        if (t.category === 'personal') return false;
+
         // 구글 로그인한 경우: Firestore에서 `userId`로 쿼리해 온 데이터이므로 기본적으로 모두 내 데이터입니다.
         // 같은 계정(작업실)을 쓰는 모든 기기(PC, 폰 등)에서 일관성을 유지하기 위해,
         // 내가 보낸 일(batchId 존재)이거나 수동 위임한 일은 기기의 임시 닉네임과 관계없이 전부 메인에서 숨깁니다.
