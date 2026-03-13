@@ -17,6 +17,7 @@ import AppSettingsModal from "@/components/AppSettingsModal/AppSettingsModal";
 import GuideModal from "@/components/GuideModal/GuideModal";
 import DelegationDashboard from "@/components/DelegationDashboard/DelegationDashboard";
 import ReceivedTasksDashboard from "@/components/ReceivedTasksDashboard/ReceivedTasksDashboard";
+import PersonalTasksDashboard from "@/components/PersonalTasksDashboard/PersonalTasksDashboard";
 import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import LanguageSelector from "@/components/LanguageSelector/LanguageSelector";
 import { useLanguage } from "@/context/LanguageContext";
@@ -24,8 +25,8 @@ import type { Todo } from "@/types/todo";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import styles from "./page.module.css";
 
-function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean }) {
-  const { viewMode, fcmToken, requestPushPermission } = useTodos();
+function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode, onOpenPersonal }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean; onOpenPersonal: () => void }) {
+  const { viewMode, fcmToken, requestPushPermission, counts } = useTodos();
   const { t } = useLanguage();
   const [permGranted, setPermGranted] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -127,14 +128,37 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                 aria-label="수신함 (받은 일)"
                 title="수신함 (받은 일)"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                  <path d="M22 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  <line x1="16" y1="18" x2="22" y2="18" />
-                  <line x1="19" y1="15" x2="19" y2="21" />
-                </svg>
+                <div className={styles.iconWithBadge}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                    <path d="M22 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    <line x1="16" y1="18" x2="22" y2="18" />
+                    <line x1="19" y1="15" x2="19" y2="21" />
+                  </svg>
+                  {counts.received > 0 && <span className={styles.badge}>{counts.received}</span>}
+                </div>
               </button>
               <span className={styles.iconLabel}>{t("icon.received")}</span>
+            </div>
+
+            <div className={styles.iconBtnWrapper}>
+              <button
+                className={styles.shareListBtn}
+                onClick={onOpenPersonal}
+                type="button"
+                aria-label="내 할 일"
+                title="나만 보는 할 일"
+              >
+                <div className={styles.iconWithBadge}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                  {counts.personal > 0 && <span className={styles.badge}>{counts.personal}</span>}
+                </div>
+              </button>
+              <span className={styles.iconLabel}>내 할 일</span>
             </div>
 
             <div className={styles.iconBtnWrapper}>
@@ -145,10 +169,13 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
                 aria-label="지시 현황판"
                 title="지시 현황판 (보낸 일)"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-                </svg>
+                <div className={styles.iconWithBadge}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                  </svg>
+                  {counts.sent > 0 && <span className={styles.badge}>{counts.sent}</span>}
+                </div>
               </button>
               <span className={styles.iconLabel}>{t("icon.sent")}</span>
             </div>
@@ -237,6 +264,7 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   const [showGuide, setShowGuide] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showReceivedTasks, setShowReceivedTasks] = useState(false);
+  const [showPersonalTasks, setShowPersonalTasks] = useState(false);
   const [showSync, setShowSync] = useState(false);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
@@ -249,7 +277,14 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
 
   return (
     <>
-      <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenReceivedTasks={() => setShowReceivedTasks(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
+      <Header
+        onShareList={() => setShowShareList(true)}
+        onOpenDashboard={() => setShowDashboard(true)}
+        onOpenReceivedTasks={() => setShowReceivedTasks(true)}
+        onOpenPersonal={() => setShowPersonalTasks(true)}
+        onOpenSync={() => setShowSync(true)}
+        isSharedMode={isSharedMode}
+      />
       <main className="app-content">
         {!isSharedMode && viewMode === "list" && <SmartInput />}
 
@@ -320,6 +355,7 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
 
       <DelegationDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} />
       <ReceivedTasksDashboard isOpen={showReceivedTasks} onClose={() => setShowReceivedTasks(false)} />
+      <PersonalTasksDashboard isOpen={showPersonalTasks} onClose={() => setShowPersonalTasks(false)} />
       <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
       <AnimatePresence>

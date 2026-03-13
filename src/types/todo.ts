@@ -34,6 +34,7 @@ export interface Todo {
     updatedAt: Date;
     completedAt?: Date;
     lastCompletedBy?: string;
+    category?: 'personal' | 'shared';
 }
 
 export interface ParsedInput {

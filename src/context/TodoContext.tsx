@@ -25,14 +25,19 @@ interface TodoContextType {
     todos: Todo[];
     viewMode: "list" | "board";
     setViewMode: (mode: "list" | "board") => void;
-    addTodo: (title: string, deadline: Date | null) => void;
+    reorderTodos: (activeId: string, overId: string) => void;
+    moveTodoStatus: (id: string, status: TodoStatus) => void;
+    addTodo: (title: string, deadline: Date | null, category?: 'personal' | 'shared') => void;
     updateTodo: (id: string, updates: Partial<Todo>) => void;
     deleteTodo: (id: string) => void;
     completeTodo: (id: string) => void;
     uncompleteTodo: (id: string) => void;
     clearCompletedTodos: (idsToClear?: string[]) => Promise<void>;
-    reorderTodos: (activeId: string, overId: string) => void;
-    moveTodoStatus: (id: string, status: TodoStatus) => void;
+    counts: {
+        personal: number;
+        received: number;
+        sent: number;
+    };
     fcmToken: string | null;
     requestPushPermission: () => Promise<void>;
     activeWorkspaceId: string;
@@ -474,10 +479,17 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         // 로컬에 저장하지 않습니다.
     }, [todos, isLoaded, batchId, todoId]);
 
-    const addTodo = useCallback(async (title: string, deadline: Date | null) => {
+    const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+
+    const counts = {
+        personal: todos.filter(t => t.category === 'personal' && t.status !== 'done').length,
+        received: todos.filter(t => t.assigneeName === myNickname && t.status !== 'done').length,
+        sent: todos.filter(t => t.createdBy === myNickname && (t.batchId || (t.assigneeName && t.assigneeName !== myNickname)) && t.status !== 'done').length,
+    };
+
+    const addTodo = useCallback(async (title: string, deadline: Date | null, category: 'personal' | 'shared' = 'shared') => {
         const now = new Date();
         const newId = generateId();
-        const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
         const baseTodo = {
             title,
@@ -490,6 +502,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             createdAt: now,
             updatedAt: now,
             syncId: activeWorkspaceId,
+            category,
             ...(user ? { userId: user.uid } : {}),
         };
 
@@ -720,6 +733,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 clearCompletedTodos,
                 reorderTodos,
                 moveTodoStatus,
+                counts,
                 fcmToken,
                 requestPushPermission,
                 activeWorkspaceId,

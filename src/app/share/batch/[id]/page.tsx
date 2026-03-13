@@ -16,25 +16,46 @@ function BatchShareContent() {
     const { myNickname, showNicknameModal, handleNicknameSave } = useShareNickname();
 
     // Perform bindings in the background. If a task isn't assigned, assign to this user.
+    // IF MULTIPLE PEOPLE use the same batchId, we clone the tasks for each person.
     useEffect(() => {
         if (!myNickname || !db || !batchId) return;
 
         const applyBinding = async () => {
             try {
-                const q = query(collection(db as any, "todos"), where("batchId", "==", batchId));
+                const todosRef = collection(db as any, "todos");
+                const q = query(todosRef, where("batchId", "==", batchId));
                 const snapshot = await getDocs(q);
 
-                const updatePromises = snapshot.docs.map(async (document) => {
-                    const data = document.data();
-                    if (!data.assigneeName || data.assigneeName === myNickname) {
-                        if (data.assigneeName !== myNickname) {
-                            await updateDoc(doc(db as any, "todos", document.id), { assigneeName: myNickname }).catch(e => console.error(e));
-                        }
+                const existingTasks = snapshot.docs.map(d => d.data());
+
+                // Find original template tasks (those not assigned yet, or created by the sender)
+                // Actually, let's look for tasks in this batch that DO NOT belong to myNickname yet.
+                const myExistingInBatch = existingTasks.filter(t => t.assigneeName === myNickname);
+                const templateTasks = existingTasks.filter(t => !t.assigneeName || (t.createdBy !== myNickname && !myExistingInBatch.some(m => m.title === t.title)));
+
+                if (templateTasks.length > 0 && myExistingInBatch.length === 0) {
+                    const { generateId } = await import("@/lib/utils");
+                    const { doc, setDoc } = await import("firebase/firestore");
+
+                    for (const t of templateTasks) {
+                        const newId = generateId();
+                        const clonedTask = {
+                            ...t,
+                            id: newId,
+                            assigneeName: myNickname,
+                            status: "todo",
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            // Keep batchId so sender sees it
+                        };
+                        delete (clonedTask as any).completedAt;
+                        delete (clonedTask as any).lastCompletedBy;
+
+                        await setDoc(doc(db as any, "todos", newId), clonedTask).catch(e => console.error(e));
                     }
-                });
-                Promise.all(updatePromises).catch(console.error);
+                }
             } catch (err) {
-                console.error("Binding error:", err);
+                console.error("Cloning/Binding error:", err);
             }
         };
         applyBinding();
