@@ -398,6 +398,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                             syncId: data.syncId,
                             userId: data.userId,
                             batchId: data.batchId,
+                            category: data.category,
                             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                         } as Todo]);
                     } else {
@@ -444,6 +445,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                             geoFence: data.geoFence,
                             syncId: data.syncId,
                             userId: data.userId,
+                            category: data.category,
                             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
                             updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
                             completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : undefined,
