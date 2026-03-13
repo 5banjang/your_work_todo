@@ -21,14 +21,12 @@ messaging.onBackgroundMessage((payload) => {
     const data = payload.data || {};
     const notificationTitle = data.title || 'Your To-Do';
     const notificationOptions = {
-        body: data.body || '새로운 할 일 상태가 변경되었습니다.',
+        body: data.body || '새로운 알림이 도착했습니다.',
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
-        tag: 'todo-completion-' + Date.now(),
+        tag: data.todoId ? 'todo-' + data.todoId : 'todo-msg-' + Date.now(),
         requireInteraction: true,
-        // ★ Android Chrome에서 소리를 재생하려면 silent을 false로 하고
-        // 시스템 기본 알림 소리가 나도록 합니다.
         silent: false,
         data: {
             url: data.url || '/'
@@ -74,24 +72,22 @@ self.addEventListener('push', (event) => {
         }
 
         const data = payload.data || {};
-        if (data.type === 'TODO_COMPLETED') {
-            const notificationTitle = data.title || '할 일 완료 알림';
-            const notificationOptions = {
-                body: data.body || '할 일이 완료되었습니다.',
-                icon: '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
-                vibrate: [200, 100, 200, 100, 200],
-                tag: 'todo-completion-' + Date.now(),
-                requireInteraction: true,
-                silent: false,
-                data: {
-                    url: data.url || '/'
-                }
-            };
+        const notificationTitle = data.title || 'Your To-Do';
+        const notificationOptions = {
+            body: data.body || '상태가 업데이트되었습니다.',
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            vibrate: [200, 100, 200, 100, 200],
+            tag: data.todoId ? 'todo-' + data.todoId : 'todo-msg-' + Date.now(),
+            requireInteraction: true,
+            silent: false,
+            data: {
+                url: data.url || '/'
+            }
+        };
 
-            event.waitUntil(
-                self.registration.showNotification(notificationTitle, notificationOptions)
-            );
-        }
+        event.waitUntil(
+            self.registration.showNotification(notificationTitle, notificationOptions)
+        );
     }
 });

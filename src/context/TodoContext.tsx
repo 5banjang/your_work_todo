@@ -29,6 +29,7 @@ interface TodoContextType {
     moveTodoStatus: (id: string, status: TodoStatus) => void;
     addTodo: (title: string, deadline: Date | null, category?: 'personal' | 'shared') => void;
     updateTodo: (id: string, updates: Partial<Todo>) => void;
+    bulkUpdateTodos: (ids: string[], updates: Partial<Todo>) => Promise<void>;
     deleteTodo: (id: string) => void;
     completeTodo: (id: string) => void;
     uncompleteTodo: (id: string) => void;
@@ -571,6 +572,32 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         }
     }, []);
 
+    const bulkUpdateTodos = useCallback(async (ids: string[], updates: Partial<Todo>) => {
+        if (isFirebaseConfigured() && db) {
+            try {
+                const batch = writeBatch(db!);
+                const now = new Date();
+                ids.forEach(id => {
+                    const docRef = doc(db!, "todos", id);
+                    const cleanUpdates = { ...updates, updatedAt: now } as Record<string, any>;
+                    Object.keys(cleanUpdates).forEach(key => {
+                        if (cleanUpdates[key] === undefined) delete cleanUpdates[key];
+                    });
+                    batch.update(docRef, cleanUpdates);
+                });
+                await batch.commit();
+            } catch (err) {
+                console.error("Error bulk updating todos:", err);
+            }
+        } else {
+            setTodos((prev) =>
+                prev.map((t) =>
+                    ids.includes(t.id) ? { ...t, ...updates, updatedAt: new Date() } : t
+                )
+            );
+        }
+    }, []);
+
     const deleteTodo = useCallback(async (id: string) => {
         if (isFirebaseConfigured() && db) {
             try {
@@ -750,6 +777,7 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 setViewMode,
                 addTodo,
                 updateTodo,
+                bulkUpdateTodos,
                 deleteTodo,
                 completeTodo,
                 uncompleteTodo,

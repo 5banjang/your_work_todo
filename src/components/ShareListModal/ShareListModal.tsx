@@ -13,7 +13,8 @@ interface ShareListModalProps {
 }
 
 export default function ShareListModal({ onClose }: ShareListModalProps) {
-    const { todos, updateTodo } = useTodos();
+    const { todos, updateTodo, bulkUpdateTodos } = useTodos();
+    const [isMoving, setIsMoving] = useState(false);
     const [copied, setCopied] = useState(false);
     const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
 
@@ -117,6 +118,21 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
         }
     }, [shareText, processBatchSave, onClose]);
 
+    const handleMoveToPersonal = useCallback(async () => {
+        if (selectedIds.size === 0) return;
+        setIsMoving(true);
+        try {
+            await bulkUpdateTodos(Array.from(selectedIds), { category: 'personal' });
+            onClose();
+            alert(`${selectedIds.size}개의 할 일을 '내 할 일(비공개)'로 이동했습니다.`);
+        } catch (err) {
+            console.error("Move to personal failed", err);
+            alert("이동 중 오류가 발생했습니다.");
+        } finally {
+            setIsMoving(false);
+        }
+    }, [selectedIds, bulkUpdateTodos, onClose]);
+
     return (
         <AnimatePresence>
             <motion.div
@@ -214,8 +230,33 @@ export default function ShareListModal({ onClose }: ShareListModalProps) {
                     </div>
 
                     {/* Share actions */}
-                    <div className={styles.actions}>
-                        <button className={styles.shareBtn} onClick={handleNativeShare} type="button" style={{ width: '100%', padding: '16px' }}>
+                    <div className={styles.actions} style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            className={styles.shareBtn}
+                            onClick={handleMoveToPersonal}
+                            disabled={selectedIds.size === 0 || isMoving}
+                            type="button"
+                            style={{
+                                flex: 1,
+                                padding: '16px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                color: 'var(--color-text-primary)'
+                            }}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            {isMoving ? "이동 중..." : "내 할 일로 이동"}
+                        </button>
+
+                        <button
+                            className={styles.shareBtn}
+                            onClick={handleNativeShare}
+                            disabled={selectedIds.size === 0}
+                            type="button"
+                            style={{ flex: 1, padding: '16px' }}
+                        >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" />
                                 <polyline points="16,6 12,2 8,6" strokeLinecap="round" strokeLinejoin="round" />
