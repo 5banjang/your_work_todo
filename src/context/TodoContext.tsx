@@ -30,7 +30,7 @@ interface TodoContextType {
     deleteTodo: (id: string) => void;
     completeTodo: (id: string) => void;
     uncompleteTodo: (id: string) => void;
-    clearCompletedTodos: () => Promise<void>;
+    clearCompletedTodos: (idsToClear?: string[]) => Promise<void>;
     reorderTodos: (activeId: string, overId: string) => void;
     moveTodoStatus: (id: string, status: TodoStatus) => void;
     fcmToken: string | null;
@@ -84,9 +84,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             try {
                 const msg = messaging();
                 if (!msg) return;
-                let reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+                let reg = await navigator.serviceWorker.getRegistration("/sw.js");
                 if (!reg) {
-                    reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+                    reg = await navigator.serviceWorker.register("/sw.js");
                 }
                 const token = await getToken(msg, {
                     serviceWorkerRegistration: reg,
@@ -213,9 +213,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             if (permission === "granted") {
                 const msg = messaging();
                 if (msg) {
-                    let reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+                    let reg = await navigator.serviceWorker.getRegistration("/sw.js");
                     if (!reg) {
-                        reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+                        reg = await navigator.serviceWorker.register("/sw.js");
                     }
                     const token = await getToken(msg, {
                         serviceWorkerRegistration: reg,
@@ -593,15 +593,39 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
         }
     }, []);
 
-    const clearCompletedTodos = useCallback(async () => {
+    const clearCompletedTodos = useCallback(async (idsToClear?: string[]) => {
         const myNickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
-        const completedTodos = todos.filter(t => {
-            if (t.status !== "done") return false;
-            const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
-            if (!involvesMe) return false;
-            const isDelegatedByMe = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
-            return !isDelegatedByMe;
-        });
+
+        let completedTodos: Todo[] = [];
+
+        if (idsToClear && idsToClear.length > 0) {
+            // 명시적으로 지울 ID 목록을 받은 경우 (UI에서 보이는 항목과 100% 일치시킴)
+            completedTodos = todos.filter(t => idsToClear.includes(t.id));
+        } else {
+            // 기존 폴백 로직
+            completedTodos = todos.filter(t => {
+                if (t.status !== "done") return false;
+                // 공유 모드 (batchId) 일 때는 현재 보이는 항목들 소유권 검사 없이 전부 지울 수 있도록 허용
+                if (batchId) return true;
+
+                // 구글 로그인한 경우: Firestore에서 `userId`로 쿼리해 온 데이터이므로 기본적으로 모두 내 데이터입니다.
+                if (user) {
+                    const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+                    const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+                    return !sentOutbox && !manuallyDelegated;
+                }
+
+                // 로그인하지 않은 경우 (기존 로직 유지)
+                const involvesMe = t.createdBy === myNickname || t.createdBy === "me" || t.assigneeName === myNickname;
+                if (!involvesMe) return false;
+
+                // Filter out tasks I sent out: if I created it AND it has a batchId (shared via link)
+                const sentOutbox = t.createdBy === myNickname && !!t.batchId;
+                const manuallyDelegated = t.createdBy === myNickname && t.assigneeName && t.assigneeName !== myNickname;
+                return !sentOutbox && !manuallyDelegated;
+            });
+        }
+
         if (completedTodos.length === 0) return;
 
         if (isFirebaseConfigured() && db) {
@@ -616,9 +640,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 console.error("Error clearing completed todos:", err);
             }
         } else {
-            setTodos((prev) => prev.filter(t => t.status !== "done"));
+            setTodos((prev) => prev.filter(t => !completedTodos.find(c => c.id === t.id)));
         }
-    }, [todos]);
+    }, [todos, batchId, user]);
 
     const reorderTodos = useCallback(async (activeId: string, overId: string) => {
         const oldIndex = todos.findIndex((t) => t.id === activeId);

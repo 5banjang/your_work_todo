@@ -72,7 +72,6 @@ export default function RootLayout({
             <ServiceWorkerRegistrar />
             <KakaoRedirect />
             <GlobalNicknameCheck />
-            <InstallPrompt />
             <div className="app-container">
               {children}
             </div>

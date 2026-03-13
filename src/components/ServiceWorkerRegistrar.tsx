@@ -53,10 +53,19 @@ export default function ServiceWorkerRegistrar() {
         if (waitingWorker) {
             // Tell the waiting SW to take control immediately
             waitingWorker.postMessage({ type: "SKIP_WAITING" });
-        } else {
-            // Fallback hard reload
-            window.location.reload();
         }
+
+        // Timeout 무작정 기다리지 않고 강제로 캐시를 날리고 새로 받아옵니다.
+        // 혹시라도 구버전 SW가 SKIP_WAITING 메시지를 처리하지 못하고 먹통(무한대기)이 된 경우를 대비한 필수 안전장치입니다.
+        setTimeout(() => {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+                window.location.reload();
+            });
+        }, 500);
+
         setShowReload(false);
     };
 

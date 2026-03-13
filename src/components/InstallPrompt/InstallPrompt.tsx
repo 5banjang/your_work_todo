@@ -32,7 +32,7 @@ function isStandalone(): boolean {
     return window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
 }
 
-export default function InstallPrompt() {
+export default function InstallPrompt({ isSharedMode }: { isSharedMode?: boolean }) {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
@@ -45,13 +45,11 @@ export default function InstallPrompt() {
             return;
         }
 
-        // 이미 캡처된 이벤트가 있으면 사용
         if (window.__deferredInstallPrompt) {
             setDeferredPrompt(window.__deferredInstallPrompt);
             setIsInstallable(true);
         }
 
-        // 이후에 발생하는 이벤트도 대응
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -70,7 +68,6 @@ export default function InstallPrompt() {
         window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
         window.addEventListener("appinstalled", handleAppInstalled);
 
-        // iOS Safari에서는 beforeinstallprompt가 없으므로 수동 안내 표시
         if (isIOSSafari() && !isStandalone()) {
             setShowIOSGuide(true);
         }
@@ -89,7 +86,8 @@ export default function InstallPrompt() {
             setDeferredPrompt(null);
             setIsInstallable(false);
             window.__deferredInstallPrompt = undefined;
-        } else if (isIOSSafari()) {
+        } else {
+            // If they clicked but no prompt is available (e.g., in-app browser or iOS)
             setShowIOSGuide(true);
         }
     };
@@ -101,30 +99,31 @@ export default function InstallPrompt() {
 
     if (isInstalled || dismissed) return null;
 
-    // Android/Desktop: beforeinstallprompt 기반
-    if (isInstallable) {
-        return (
-            <button onClick={handleInstallClick} className={styles.installBtn} aria-label="앱 설치하기">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                앱 다운로드
-            </button>
-        );
-    }
+    // Show banner if we have the prompt, OR if we are in shared mode (to aggressively promote install)
+    const shouldShowBanner = isInstallable || (isSharedMode && !isStandalone());
 
-    // iOS Safari: 수동 설치 안내
-    if (showIOSGuide) {
-        return (
-            <div className={styles.iosGuide}>
+    if (!shouldShowBanner && !showIOSGuide) return null;
+
+    return (
+        <div className={styles.bannerContainer}>
+            {!showIOSGuide ? (
+                <div className={styles.bannerContent}>
+                    <div className={styles.bannerText}>
+                        <strong>앱으로 편하게 관리하세요 🚀</strong>
+                        <span>접속할 때마다 링크 찾을 필요 없이 바로 실행!</span>
+                    </div>
+                    <button onClick={handleInstallClick} className={styles.bannerBtn} aria-label="앱 다운로드">
+                        앱 다운로드
+                    </button>
+                    <button onClick={handleDismiss} className={styles.bannerClose} aria-label="닫기">✕</button>
+                </div>
+            ) : (
                 <div className={styles.iosGuideContent}>
                     <span className={styles.iosGuideIcon}>📲</span>
                     <div className={styles.iosGuideText}>
-                        <strong>앱으로 설치하기</strong>
+                        <strong>앱으로 열기/설치하기</strong>
                         <span>
-                            하단 공유 버튼
+                            사파리/크롬 등 외부 브라우저로 연 뒤, 하단 공유 버튼
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" style={{ display: "inline", verticalAlign: "middle", margin: "0 2px" }}>
                                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" strokeLinejoin="round" />
                                 <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -135,9 +134,7 @@ export default function InstallPrompt() {
                     </div>
                     <button className={styles.iosGuideDismiss} onClick={handleDismiss} aria-label="닫기">✕</button>
                 </div>
-            </div>
-        );
-    }
-
-    return null;
+            )}
+        </div>
+    );
 }

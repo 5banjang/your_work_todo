@@ -228,6 +228,8 @@ function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync,
   );
 }
 
+import InstallPrompt from "@/components/InstallPrompt/InstallPrompt";
+
 export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   const { viewMode, todos } = useTodos();
   const [settingsTodo, setSettingsTodo] = useState<Todo | null>(null);
@@ -250,6 +252,11 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
       <Header onShareList={() => setShowShareList(true)} onOpenDashboard={() => setShowDashboard(true)} onOpenReceivedTasks={() => setShowReceivedTasks(true)} onOpenSync={() => setShowSync(true)} isSharedMode={isSharedMode} />
       <main className="app-content">
         {!isSharedMode && viewMode === "list" && <SmartInput />}
+
+        {/* 앱 다운로드 배너: 공유 모드일 때 무조건 표시 (기기에 설치 안된 경우), 그리고 일반 모드에서도 설치 가능하면 메인 뷰 상단에 표시 */}
+        <div style={{ padding: "0 20px" }}>
+          <InstallPrompt isSharedMode={isSharedMode} />
+        </div>
 
         {typeof window !== "undefined" && !isFirebaseConfigured() && (
           <div style={{
@@ -401,16 +408,33 @@ function HomeContent() {
               <div>
                 <label style={{ fontSize: "0.95rem", fontWeight: "bold", color: "var(--color-text-primary)", display: "block", marginBottom: "4px" }}>기존 작업실 연결 (동기화 복원)</label>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", lineHeight: "1.4" }}>
-                  사파리나 카카오톡 브라우저에서 '복사'한 주소를 붙여넣어 주세요.
+                  사파리나 카카오톡에서 '복사'한 주소를 붙여넣어 주세요.<br />
+                  <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>(입력창 터치 시 '사전'만 뜬다면 아래 붙여넣기 버튼 활용)</span>
                 </p>
               </div>
-              <input
-                type="text"
-                value={pasteUrl}
-                onChange={(e) => setPasteUrl(e.target.value)}
-                placeholder="예: https://.../?w=..."
-                style={{ width: "100%", padding: "14px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--color-text-primary)", fontSize: "0.95rem", outline: "none" }}
-              />
+              <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+                <input
+                  type="text"
+                  value={pasteUrl}
+                  onChange={(e) => setPasteUrl(e.target.value)}
+                  placeholder="예: https://.../?w=..."
+                  style={{ flex: 1, padding: "14px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--color-text-primary)", fontSize: "0.95rem", outline: "none", userSelect: "text", WebkitUserSelect: "text" }}
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      if (text) setPasteUrl(text);
+                    } catch (err) {
+                      alert("클립보드 접근 권한이 없거나 지원되지 않는 브라우저입니다. 직접 길게 눌러 붙여넣기 해주세요.");
+                    }
+                  }}
+                  style={{ padding: "0 16px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.15)", color: "var(--color-text-primary)", fontWeight: "bold", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  붙여넣기
+                </button>
+              </div>
               <button
                 type="submit"
                 disabled={!pasteUrl}

@@ -148,3 +148,18 @@
 .toggleInput:checked+.toggleTrack .toggleThumb {
     transform: translateX(20px);
 }
+.footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.versionText {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono, monospace);
+    opacity: 0.6;
+}
