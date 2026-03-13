@@ -13,7 +13,6 @@ export default function SmartInput() {
     const { t } = useLanguage();
     const [value, setValue] = useState("");
     const [isFocused, setIsFocused] = useState(false);
-    const [isPersonal, setIsPersonal] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
