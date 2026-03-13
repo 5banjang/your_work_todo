@@ -266,6 +266,13 @@ export function MainContent({ isSharedMode }: { isSharedMode?: boolean }) {
   const [showReceivedTasks, setShowReceivedTasks] = useState(false);
   const [showPersonalTasks, setShowPersonalTasks] = useState(false);
   const [showSync, setShowSync] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams?.get("received") === "true") {
+      setShowReceivedTasks(true);
+    }
+  }, [searchParams]);
 
   const handleOpenSettings = useCallback((todo: Todo) => {
     setSettingsTodo(todo);

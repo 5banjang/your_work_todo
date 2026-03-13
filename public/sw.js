@@ -42,14 +42,12 @@ self.addEventListener("activate", (event) => {
 
 // Fetch: network-first with cache fallback
 self.addEventListener("fetch", (event) => {
-    // Skip non-GET and chrome-extension requests
     if (event.request.method !== "GET") return;
     if (event.request.url.startsWith("chrome-extension://")) return;
 
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Clone and cache successful same-origin responses
                 if (response.status === 200 && event.request.url.startsWith(self.location.origin)) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -59,10 +57,8 @@ self.addEventListener("fetch", (event) => {
                 return response;
             })
             .catch(() => {
-                // Fallback to cache when offline
                 return caches.match(event.request).then((cached) => {
                     if (cached) return cached;
-                    // For navigation requests, serve the cached index
                     if (event.request.mode === "navigate") {
                         return caches.match("/");
                     }
@@ -75,12 +71,18 @@ self.addEventListener("fetch", (event) => {
 // Notification click
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
+    // Use URL from data, fallback to root
     const url = event.notification.data?.url || "/";
+
     event.waitUntil(
-        self.clients.matchAll({ type: "window" }).then((clients) => {
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+            // Check if there is already a window open with this origin
             for (const client of clients) {
-                if (client.url === url && "focus" in client) return client.focus();
+                if (client.url.includes(self.location.origin) && "focus" in client) {
+                    return client.focus().then(c => c.navigate(url));
+                }
             }
+            // If not, open a new window
             if (self.clients.openWindow) {
                 return self.clients.openWindow(url);
             }
@@ -88,20 +90,19 @@ self.addEventListener("notificationclick", (event) => {
     );
 });
 
-// ★ data-only 메시지를 수신하여 Service Worker가 직접 알림을 생성합니다.
+// data-only 메시지를 수신하여 Service Worker가 직접 알림을 생성합니다.
 messaging.onBackgroundMessage((payload) => {
-    console.log('[sw.js] Received background message', payload);
+    console.log('[sw.js] Background message received', payload);
 
     const data = payload.data || {};
     const notificationTitle = data.title || 'Your To-Do';
     const notificationOptions = {
-        body: data.body || '새로운 할 일 상태가 변경되었습니다.',
+        body: data.body || '할 일 상태가 업데이트되었습니다.',
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
-        tag: 'todo-completion-' + Date.now(),
+        tag: data.todoId ? 'todo-' + data.todoId : 'todo-msg-' + Date.now(),
         requireInteraction: true,
-        silent: false,
         data: {
             url: data.url || '/'
         }
@@ -110,37 +111,35 @@ messaging.onBackgroundMessage((payload) => {
     return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
+// Push event fallback for data-only messages
 self.addEventListener('push', (event) => {
-    if (event.data) {
-        let payload;
-        try {
-            payload = event.data.json();
-        } catch (e) {
-            payload = { data: { title: 'Your To-Do', body: event.data.text() } };
-        }
+    if (!event.data) return;
 
-        // FCM SDK가 이미 처리한 경우 위임
-        if (payload.notification) return;
-
-        const data = payload.data || {};
-        if (data.type === 'TODO_COMPLETED') {
-            const notificationTitle = data.title || '할 일 완료 알림';
-            const notificationOptions = {
-                body: data.body || '할 일이 완료되었습니다.',
-                icon: '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
-                vibrate: [200, 100, 200, 100, 200],
-                tag: 'todo-completion-' + Date.now(),
-                requireInteraction: true,
-                silent: false,
-                data: {
-                    url: data.url || '/'
-                }
-            };
-
-            event.waitUntil(
-                self.registration.showNotification(notificationTitle, notificationOptions)
-            );
-        }
+    let payload;
+    try {
+        payload = event.data.json();
+    } catch (e) {
+        payload = { data: { title: 'Your To-Do', body: event.data.text() } };
     }
+
+    // FCM SDK handler will take care of notification key
+    if (payload.notification) return;
+
+    const data = payload.data || {};
+    const notificationTitle = data.title || 'Your To-Do';
+    const notificationOptions = {
+        body: data.body || '할 일이 완료되었습니다.',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        vibrate: [200, 100, 200, 100, 200],
+        tag: data.type === 'TODO_COMPLETED' ? 'todo-completion-' + Date.now() : 'todo-msg-' + Date.now(),
+        requireInteraction: true,
+        data: {
+            url: data.url || '/'
+        }
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(notificationTitle, notificationOptions)
+    );
 });

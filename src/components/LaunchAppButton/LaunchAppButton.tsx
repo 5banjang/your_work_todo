@@ -34,7 +34,8 @@ export default function LaunchAppButton() {
                     onClick={() => {
                         // Attempt to trigger opening standalone mode if applicable, 
                         // or just rely on the link behavior. Re-navigating to / usually helps.
-                        window.location.href = "/";
+                        // Add ?received=true to land on the Received Tasks dashboard
+                        window.location.href = "/?received=true";
                     }}
                 >
                     앱 열기
