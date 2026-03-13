@@ -9,6 +9,7 @@ import { useShareNickname } from "@/hooks/useShareNickname";
 import styles from "./share.module.css";
 import { db } from "@/lib/firebase";
 import { updateDoc, doc, getDoc } from "firebase/firestore";
+import LaunchAppButton from "@/components/LaunchAppButton/LaunchAppButton";
 
 function SingleShareContent() {
     const params = useParams();
@@ -54,6 +55,9 @@ function SingleShareContent() {
 
     return (
         <TodoProvider todoId={todoId}>
+            <div style={{ padding: "10px", maxWidth: "800px", margin: "0 auto" }}>
+                <LaunchAppButton />
+            </div>
             <MainContent isSharedMode={true} />
         </TodoProvider>
     );

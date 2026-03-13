@@ -9,6 +9,7 @@ import { useShareNickname } from "@/hooks/useShareNickname";
 import styles from "../../[id]/share.module.css";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
+import LaunchAppButton from "@/components/LaunchAppButton/LaunchAppButton";
 
 function BatchShareContent() {
     const params = useParams();
@@ -76,6 +77,9 @@ function BatchShareContent() {
 
     return (
         <TodoProvider batchId={batchId}>
+            <div style={{ padding: "10px", maxWidth: "800px", margin: "0 auto" }}>
+                <LaunchAppButton />
+            </div>
             <MainContent isSharedMode={true} />
         </TodoProvider>
     );

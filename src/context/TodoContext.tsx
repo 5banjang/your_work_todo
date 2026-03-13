@@ -65,6 +65,8 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 
     const prevTodosRef = React.useRef<Todo[]>([]);
     const nicknameRef = React.useRef("");
+    const sessionIdRef = React.useRef(Math.random().toString(36).substring(7));
+    const [sessionActionIds, setSessionActionIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         const syncNickname = () => {
@@ -183,9 +185,11 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
             if (t.status !== "done") return false;
             const old = prev.find(p => p.id === t.id);
             if (!old || old.status === "done") return false;
-            // Only notify if someone else completed it, or if both have no name, assume it's me for now if it originated locally
-            // We use a simple check: if lastCompletedBy matches my nickname, don't notify.
-            if (t.lastCompletedBy && t.lastCompletedBy === myNickname) return false;
+
+            // sessionActionIds에 포함된 할 일은 '내가 이 창에서 방금 완료한 것'이므로 알림 생략.
+            // 반면, 포함되어 있지 않다면 (다른 창이나 다른 기기에서 완료한 것이므로) 내 계정이라도 알림을 보냄!
+            if (sessionActionIds.has(t.id)) return false;
+
             return true;
         });
 
@@ -614,6 +618,8 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 
     const completeTodo = useCallback(async (id: string) => {
         const nickname = typeof window !== "undefined" ? localStorage.getItem("your-todo-nickname") || "누군가" : "누군가";
+        setSessionActionIds(prev => new Set(prev).add(id));
+
         if (isFirebaseConfigured() && db) {
             try {
                 await updateDoc(doc(db!, "todos", id), {
@@ -777,6 +783,8 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 todos,
                 viewMode,
                 setViewMode,
+                reorderTodos,
+                moveTodoStatus,
                 addTodo,
                 updateTodo,
                 bulkUpdateTodos,
@@ -784,8 +792,6 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
                 completeTodo,
                 uncompleteTodo,
                 clearCompletedTodos,
-                reorderTodos,
-                moveTodoStatus,
                 counts,
                 fcmToken,
                 requestPushPermission,
@@ -801,7 +807,9 @@ export function TodoProvider({ children, batchId, todoId, workspaceId }: { child
 }
 
 export function useTodos() {
-    const ctx = useContext(TodoContext);
-    if (!ctx) throw new Error("useTodos must be used within a TodoProvider");
-    return ctx;
+    const context = useContext(TodoContext);
+    if (context === undefined) {
+        throw new Error("useTodos must be used within a TodoProvider");
+    }
+    return context;
 }
