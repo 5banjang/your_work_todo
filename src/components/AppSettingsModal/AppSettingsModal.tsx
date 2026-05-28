@@ -114,7 +114,7 @@ export default function AppSettingsModal({ onClose }: AppSettingsModalProps) {
                 </div>
 
                 <div className={styles.footer}>
-                    <span className={styles.versionText}>v3.5.0</span>
+                    <span className={styles.versionText}>v4.1.0</span>
                 </div>
             </motion.div>
         </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "your-todo-v4";
+const CACHE_NAME = "your-todo-v4.1.0";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 // Firebase App & Messaging SDK Import
