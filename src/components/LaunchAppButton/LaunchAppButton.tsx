@@ -3,7 +3,12 @@
 import React, { useEffect, useState } from "react";
 import styles from "./LaunchAppButton.module.css";
 
-export default function LaunchAppButton() {
+interface LaunchAppButtonProps {
+    todoId: string;
+    workspaceId?: string;
+}
+
+export default function LaunchAppButton({ todoId, workspaceId }: LaunchAppButtonProps) {
     const [isPWA, setIsPWA] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
 
@@ -25,20 +30,20 @@ export default function LaunchAppButton() {
                 <span className={styles.icon}>📱</span>
                 <div className={styles.textGroup}>
                     <p className={styles.title}>앱으로 더 편리하게 관리하세요</p>
-                    <p className={styles.desc}>이미 설치되어 있다면 바로 열립니다.</p>
+                    <p className={styles.desc}>이미 설치되어 있다면 바로 저장되어 열립니다.</p>
                 </div>
             </div>
             <div className={styles.actions}>
                 <button
                     className={styles.launchBtn}
                     onClick={() => {
-                        // Attempt to trigger opening standalone mode if applicable, 
-                        // or just rely on the link behavior. Re-navigating to / usually helps.
-                        // Add ?received=true to land on the Received Tasks dashboard
-                        window.location.href = "/?received=true";
+                        // Redirect with workspace ID and import_todo parameter
+                        // This allows PWA standalone app to parse parameters on launch
+                        const targetW = workspaceId || "";
+                        window.location.href = `/?w=${targetW}&import_todo=${todoId}&received=true`;
                     }}
                 >
-                    앱 열기
+                    앱 열기 & 저장
                 </button>
                 <button className={styles.closeBtn} onClick={() => setIsVisible(false)}>
                     ✕

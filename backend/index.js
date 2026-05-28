@@ -50,6 +50,12 @@ exports.sendPushNotificationOnComplete = onDocumentUpdated("todos/{todoId}", asy
                             Urgency: "high",
                             TTL: "86400"
                         },
+                        notification: {
+                            vibrate: [200, 100, 200, 100, 200],
+                            sound: "default",
+                            icon: "/icons/icon-192.png",
+                            badge: "/icons/icon-192.png"
+                        },
                         fcmOptions: {
                             link: "/"
                         }
@@ -116,14 +122,22 @@ exports.checkReminders = onSchedule("every 1 minutes", async (event) => {
             // 이미 알림을 보냈는지 확인 (간단한 플래그)
             if (todo.lastRemindedAt) continue;
 
-            const tokensSnapshot = await admin.firestore().collection("fcmTokens")
-                .where("userNickname", "==", todo.createdBy) // 혹은 담당자에게도? 일단 제작자에게.
-                .get();
-
-            if (tokensSnapshot.empty) continue;
-
             const tokens = [];
-            tokensSnapshot.forEach(t => tokens.push(t.data().token));
+            const nickTargets = [];
+            if (todo.createdBy) nickTargets.push(todo.createdBy);
+            if (todo.assigneeName && todo.assigneeName !== todo.createdBy) nickTargets.push(todo.assigneeName);
+
+            for (const nick of nickTargets) {
+                const tokensSnapshot = await admin.firestore().collection("fcmTokens")
+                    .where("userNickname", "==", nick)
+                    .get();
+                tokensSnapshot.forEach(t => {
+                    const tok = t.data().token;
+                    if (tok && !tokens.includes(tok)) {
+                        tokens.push(tok);
+                    }
+                });
+            }
 
             if (tokens.length > 0) {
                 const message = {
@@ -134,8 +148,24 @@ exports.checkReminders = onSchedule("every 1 minutes", async (event) => {
                     data: {
                         type: "REMINDER",
                         todoId: todoId,
-                        title: "할 일 미리 알림",
-                        body: `'${todo.title}' 마감 시간이 다가옵니다.`
+                        title: "⏰ 할 일 마감 임박",
+                        body: `'${todo.title}' 할 일 마감이 다가옵니다!`,
+                        url: "/"
+                    },
+                    webpush: {
+                        headers: {
+                            Urgency: "high",
+                            TTL: "86400"
+                        },
+                        notification: {
+                            vibrate: [200, 100, 200, 100, 200],
+                            sound: "default",
+                            icon: "/icons/icon-192.png",
+                            badge: "/icons/icon-192.png"
+                        },
+                        fcmOptions: {
+                            link: "/"
+                        }
                     },
                     tokens: tokens
                 };

@@ -101,6 +101,7 @@ messaging.onBackgroundMessage((payload) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
+        sound: 'default',
         tag: data.todoId ? 'todo-' + data.todoId : 'todo-msg-' + Date.now(),
         requireInteraction: true,
         data: {
@@ -132,6 +133,7 @@ self.addEventListener('push', (event) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
+        sound: 'default',
         tag: data.type === 'TODO_COMPLETED' ? 'todo-completion-' + Date.now() : 'todo-msg-' + Date.now(),
         requireInteraction: true,
         data: {

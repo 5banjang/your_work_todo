@@ -22,7 +22,8 @@ import DeviceSyncModal from "@/components/DeviceSyncModal/DeviceSyncModal";
 import LanguageSelector from "@/components/LanguageSelector/LanguageSelector";
 import { useLanguage } from "@/context/LanguageContext";
 import type { Todo } from "@/types/todo";
-import { isFirebaseConfigured } from "@/lib/firebase";
+import { isFirebaseConfigured, db, auth } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import styles from "./page.module.css";
 
 function Header({ onShareList, onOpenDashboard, onOpenReceivedTasks, onOpenSync, isSharedMode, onOpenPersonal }: { onShareList: () => void; onOpenDashboard: () => void; onOpenReceivedTasks: () => void; onOpenSync: () => void; isSharedMode?: boolean; onOpenPersonal: () => void }) {
@@ -381,9 +382,51 @@ function HomeContent() {
   const [showWelcome, setShowWelcome] = useState<boolean>(false);
   const [pasteUrl, setPasteUrl] = useState("");
 
+  // Handle deep-linked import_todo parameter
+  useEffect(() => {
+    const importTodoId = searchParams?.get("import_todo");
+    if (!importTodoId || !db) return;
+
+    const doImport = async () => {
+      try {
+        const myW = searchParams?.get("w") || localStorage.getItem("last_workspace") || (generateId() + "-" + generateId());
+        const myName = localStorage.getItem("your-todo-nickname") || "누군가";
+
+        const docRef = doc(db, "todos", importTodoId);
+        const snapshot = await getDoc(docRef);
+
+        if (snapshot.exists()) {
+          const updates: any = {
+            assigneeName: myName,
+            syncId: myW,
+            updatedAt: new Date()
+          };
+          if (auth?.currentUser) {
+            updates.userId = auth.currentUser.uid;
+          }
+          await updateDoc(docRef, updates);
+          console.log(`Successfully imported todo ${importTodoId} to workspace ${myW}`);
+        }
+
+        // Keep workspace active
+        localStorage.setItem("last_workspace", myW);
+
+        // Redirect to clear URL and show the received tasks outbox instantly
+        router.replace(`/?w=${myW}&received=true`);
+      } catch (err) {
+        console.error("Import error in deep link:", err);
+      }
+    };
+    doImport();
+  }, [searchParams, router]);
+
   useEffect(() => {
     const w = searchParams?.get("w");
     if (!w) {
+      // If we have an import_todo parameter, do not redirect to last_workspace immediately, 
+      // let the import useEffect handle the workspace redirection
+      if (searchParams?.get("import_todo")) return;
+
       const lastW = localStorage.getItem("last_workspace");
       if (lastW) {
         // We have a stored workspace, redirect to it

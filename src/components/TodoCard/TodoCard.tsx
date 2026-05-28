@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
 import { getUrgencyLevel, formatTimeRemaining } from "@/lib/utils";
 import type { Todo } from "@/types/todo";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import styles from "./TodoCard.module.css";
 
 interface TodoCardProps {
@@ -123,12 +125,20 @@ export default function TodoCard({ todo, dragHandleProps, onSettings, readOnly }
                             {timeText}
                         </span>
                     )}
+                    {todo.remindAt && (
+                        <span className={styles.remindBadge} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "0.75rem", color: "var(--color-accent-cyan, #00f5ff)", background: "rgba(0, 245, 255, 0.08)", padding: "2px 8px", borderRadius: "12px", border: "1px solid rgba(0, 245, 255, 0.15)", marginLeft: "4px" }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="10" height="10">
+                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            알림: {format(new Date(todo.remindAt), "MM/dd a hh:mm", { locale: ko })}
+                        </span>
+                    )}
                     {todo.checklist.length > 0 && (
                         <span className={styles.checklist}>
                             ✓ {todo.checklist.filter((c) => c.completed).length}/{todo.checklist.length}
                         </span>
                     )}
-
                 </div>
 
                 <div className={styles.explicitActions}>

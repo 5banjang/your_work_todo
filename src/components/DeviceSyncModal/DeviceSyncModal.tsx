@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -11,8 +11,38 @@ interface DeviceSyncModalProps {
 }
 
 export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
-    const { user, loginWithGoogle, logout } = useTodos();
+    const { user, loginWithGoogle, logout, activeWorkspaceId } = useTodos();
     const { t } = useLanguage();
+    const [inputValue, setInputValue] = useState("");
+    const [copied, setCopied] = useState(false);
+
+    const syncUrl = typeof window !== "undefined" ? `${window.location.origin}/?w=${activeWorkspaceId}` : "";
+    const qrCodeSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(syncUrl)}`;
+
+    const handleCopyUrl = useCallback(() => {
+        if (typeof window !== "undefined") {
+            navigator.clipboard.writeText(syncUrl).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        }
+    }, [syncUrl]);
+
+    const handleRestoreSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = inputValue.trim();
+        if (!trimmed) return;
+
+        // Extract workspace ID from URL if user pasted a full URL
+        const wMatch = trimmed.match(/[?&]w=([^&]+)/);
+        const wId = wMatch ? wMatch[1] : (trimmed.startsWith('w=') ? trimmed.replace('w=', '') : trimmed);
+
+        if (wId) {
+            window.location.href = `/?w=${wId}`;
+        } else {
+            alert("올바른 작업실 ID 또는 URL 주소가 아닙니다.");
+        }
+    }, [inputValue]);
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -31,14 +61,89 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
 
                 <h2 className={styles.title}>{t("sync.title")}</h2>
                 <p className={styles.subtitle}>
-                    {t("sync.subtitle")}
+                    웹(PC)과 핸드폰 PWA 앱을 간편하게 실시간 동기화하세요.
                 </p>
 
-                <div className={styles.content}>
-                    <div className={styles.buttonGroup} style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%", marginTop: "16px" }}>
+                <div className={styles.content} style={{ maxHeight: "75vh", overflowY: "auto", paddingRight: "4px" }}>
+                    
+                    {/* QR Code Section */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", margin: "16px 0", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "12px", border: "1px solid var(--color-border)" }}>
+                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--color-text-primary)" }}>📱 스마트폰 카메라로 스캔</div>
+                        <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center", margin: "0 0 8px" }}>
+                            스마트폰 카메라로 아래 QR 코드를 찍으면 즉시 작업실이 연동됩니다.
+                        </p>
+                        <div style={{ background: "#fff", padding: "8px", borderRadius: "8px", display: "inline-block", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                            <img src={qrCodeSrc} alt="동기화 QR 코드" style={{ display: "block", width: "160px", height: "160px" }} />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleCopyUrl}
+                            style={{
+                                marginTop: "10px",
+                                padding: "8px 16px",
+                                borderRadius: "8px",
+                                background: "var(--color-accent-cyan)",
+                                color: "#000",
+                                border: "none",
+                                fontWeight: "bold",
+                                fontSize: "0.85rem",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px"
+                            }}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                            {copied ? "주소 복사됨!" : "동기화 주소 복사하기"}
+                        </button>
+                    </div>
 
+                    {/* Code Restore Form */}
+                    <form onSubmit={handleRestoreSubmit} style={{ display: "flex", flexDirection: "column", gap: "8px", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "12px", border: "1px solid var(--color-border)", width: "100%", boxSizing: "border-box" }}>
+                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--color-text-primary)" }}>🔑 다른 기기의 주소/ID 연결</div>
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="동기화 주소 또는 작업실 ID 입력"
+                            style={{
+                                padding: "12px",
+                                borderRadius: "8px",
+                                background: "rgba(255,255,255,0.05)",
+                                border: "1px solid var(--color-border)",
+                                color: "var(--color-text-primary)",
+                                fontSize: "0.9rem",
+                                outline: "none",
+                                boxSizing: "border-box",
+                                width: "100%"
+                            }}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!inputValue}
+                            style={{
+                                padding: "12px",
+                                borderRadius: "8px",
+                                background: inputValue ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.03)",
+                                color: inputValue ? "var(--color-text-primary)" : "var(--color-text-muted)",
+                                border: "none",
+                                fontWeight: "bold",
+                                cursor: inputValue ? "pointer" : "not-allowed",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            연결하기
+                        </button>
+                    </form>
+
+                    <div className={styles.buttonGroup} style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%", marginTop: "16px" }}>
+                        <div style={{ width: "100%", height: "1px", background: "var(--color-border)", margin: "8px 0" }} />
+                        <div style={{ fontSize: "0.9rem", fontWeight: "bold", color: "var(--color-text-primary)", alignSelf: "flex-start" }}>☁️ 구글 계정 동기화 (권장)</div>
                         {user ? (
-                            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+                            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
                                 <div style={{
                                     padding: "16px",
                                     background: "rgba(255, 255, 255, 0.05)",
@@ -47,16 +152,15 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                     color: "var(--color-text-primary)",
                                     textAlign: "center",
                                     width: "100%",
-                                    maxWidth: "300px"
+                                    boxSizing: "border-box"
                                 }}>
                                     <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "8px" }}>{t("sync.currentAccount")}</div>
-                                    <div style={{ fontWeight: "bold" }}>{user.email || user.displayName}</div>
+                                    <div style={{ fontWeight: "bold", wordBreak: "break-all" }}>{user.email || user.displayName}</div>
                                 </div>
                                 <button
                                     onClick={logout}
                                     style={{
                                         width: "100%",
-                                        maxWidth: "300px",
                                         padding: "14px",
                                         borderRadius: "8px",
                                         background: "rgba(239, 68, 68, 0.1)",
@@ -74,7 +178,6 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                                 onClick={loginWithGoogle}
                                 style={{
                                     width: "100%",
-                                    maxWidth: "300px",
                                     padding: "16px",
                                     borderRadius: "12px",
                                     background: "#ffffff",
@@ -99,11 +202,11 @@ export default function DeviceSyncModal({ onClose }: DeviceSyncModalProps) {
                             </button>
                         )}
 
-                        <p className={styles.instruction} style={{ marginTop: "16px", fontSize: "0.85rem", opacity: 0.8, textAlign: "center", lineHeight: "1.5" }}>
+                        <p className={styles.instruction} style={{ marginTop: "8px", fontSize: "0.8rem", opacity: 0.7, textAlign: "center", lineHeight: "1.4" }}>
                             {t("sync.legacyNote")}
                         </p>
-
                     </div>
+
                 </div>
             </motion.div>
         </div>
