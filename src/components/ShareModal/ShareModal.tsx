@@ -3,10 +3,8 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTodos } from "@/context/TodoContext";
-import type { Todo, ChecklistItem } from "@/types/todo";
+import type { Todo } from "@/types/todo";
 import { generateId } from "@/lib/utils";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import styles from "./ShareModal.module.css";
 
 interface ShareModalProps {
@@ -28,6 +26,14 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
     const [remindMinutes, setRemindMinutes] = useState("30");
     const [copied, setCopied] = useState(false);
 
+    // Advanced Sharing state
+    const [templateCopied, setTemplateCopied] = useState(false);
+    const [batchNicknames, setBatchNicknames] = useState("");
+    const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+    const [generatedBatchLinks, setGeneratedBatchLinks] = useState<{ name: string; url: string }[]>([]);
+    const [allBatchCopied, setAllBatchCopied] = useState(false);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
     const handleSetToday = useCallback(() => {
         const now = new Date();
         setTargetYear(now.getFullYear().toString());
@@ -38,8 +44,6 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
         setTargetHour((h % 12 === 0 ? 12 : h % 12).toString().padStart(2, "0"));
         setTargetMinute((Math.floor(now.getMinutes() / 10) * 10).toString().padStart(2, "0"));
     }, []);
-
-
 
     const handleSave = useCallback(() => {
         let deadlineDate: Date | null = null;
@@ -86,6 +90,105 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
             });
         }
     }, [todo.title, todo.id]);
+
+    // Handle Advanced Options
+    const handleCopyTemplateLink = useCallback(() => {
+        const url = `${window.location.origin}/share/template/${todo.id}`;
+        const text = `[할 일 배정 - 단체 템플릿]\n${todo.title}\n\n👉 아래 링크에서 본인 이름을 입력해 할 일을 생성하고 완료해 주세요:\n${url}`;
+        navigator.clipboard.writeText(text).then(() => {
+            setTemplateCopied(true);
+            setTimeout(() => setTemplateCopied(false), 2000);
+        });
+    }, [todo.id, todo.title]);
+
+    const handleGenerateBatch = useCallback(async () => {
+        const names = batchNicknames.split(",")
+            .map(n => n.trim())
+            .filter(n => n.length > 0);
+
+        if (names.length === 0) return;
+        setIsGeneratingBatch(true);
+
+        try {
+            const { db, isFirebaseConfigured } = await import("@/lib/firebase");
+            const { writeBatch, doc } = await import("firebase/firestore");
+
+            if (isFirebaseConfigured() && db) {
+                const batch = writeBatch(db);
+                const newLinks: { name: string, url: string }[] = [];
+                const now = new Date();
+
+                let deadlineDate: Date | null = null;
+                if (targetYear && targetMonth && targetDate && targetHour && targetMinute) {
+                    let h = parseInt(targetHour);
+                    if (timeFormat === "PM" && h !== 12) h += 12;
+                    if (timeFormat === "AM" && h === 12) h = 0;
+                    deadlineDate = new Date(`${targetYear}-${targetMonth}-${targetDate}T${h.toString().padStart(2, "0")}:${targetMinute}:00`);
+                }
+
+                let remindAt: Date | null = null;
+                if (deadlineDate && remindMinutes) {
+                    remindAt = new Date(deadlineDate.getTime() - parseInt(remindMinutes) * 60 * 1000);
+                }
+
+                for (const name of names) {
+                    const newId = generateId();
+                    const clonedTodo = {
+                        title: todo.title,
+                        description: todo.description || "",
+                        status: "todo",
+                        order: todo.order || 0,
+                        deadline: deadlineDate,
+                        remindAt: remindAt,
+                        createdBy: todo.createdBy || "누군가",
+                        checklist: todo.checklist || [],
+                        syncId: todo.syncId || "",
+                        category: todo.category || "shared",
+                        assigneeName: name,
+                        createdAt: now,
+                        updatedAt: now
+                    };
+
+                    if (todo.userId) {
+                        (clonedTodo as any).userId = todo.userId;
+                    }
+
+                    const docRef = doc(db, "todos", newId);
+                    batch.set(docRef, clonedTodo);
+
+                    newLinks.push({
+                        name,
+                        url: `${window.location.origin}/share/${newId}`
+                    });
+                }
+
+                await batch.commit();
+                setGeneratedBatchLinks(newLinks);
+            }
+        } catch (err) {
+            console.error("Failed to generate batch copies:", err);
+            alert("일괄 복제 중 오류가 발생했습니다.");
+        } finally {
+            setIsGeneratingBatch(false);
+        }
+    }, [batchNicknames, todo, targetYear, targetMonth, targetDate, targetHour, targetMinute, timeFormat, remindMinutes]);
+
+    const handleCopyAllBatchLinks = useCallback(() => {
+        if (generatedBatchLinks.length === 0) return;
+        const text = generatedBatchLinks.map(link => `[${link.name}님 배정 할 일]\n${todo.title}\n👉 완료하기: ${link.url}`).join("\n\n");
+        navigator.clipboard.writeText(text).then(() => {
+            setAllBatchCopied(true);
+            setTimeout(() => setAllBatchCopied(false), 2000);
+        });
+    }, [generatedBatchLinks, todo.title]);
+
+    const handleCopySingleLink = useCallback((url: string, index: number) => {
+        const text = `[할 일 요청]\n${todo.title}\n\n👉 링크에서 완료하기:\n${url}`;
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedIndex(index);
+            setTimeout(() => setCopiedIndex(null), 2000);
+        });
+    }, [todo.title]);
 
     return (
         <AnimatePresence>
@@ -192,10 +295,104 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                             </select>
                         </div>
 
+                        {/* 고급 공유 및 할당 옵션 */}
+                        <div className={styles.advancedSection}>
+                            <h3 className={styles.sectionHeader}>🔗 다인 할당 및 공유 옵션</h3>
 
+                            {/* 대안 1: 템플릿 링크 생성 */}
+                            <div className={styles.shareOptionBox}>
+                                <div className={styles.optionTitle}>
+                                    <span className={styles.optionNumber}>대안 1</span>
+                                    <strong>단체 대화방 공유 템플릿 링크</strong>
+                                </div>
+                                <p className={styles.optionDesc}>
+                                    💡 <strong>사용 방법:</strong> 링크를 단체방에 한 번만 공유해두세요. 
+                                    수신자들이 이 링크에 접속해 이름을 입력하면, 자동으로 각자 전용의 개별 할 일이 
+                                    복사 생성되어 대시보드에 실시간으로 동기화됩니다.
+                                </p>
+                                <div className={styles.copyRow}>
+                                    <input 
+                                        type="text" 
+                                        readOnly 
+                                        value={typeof window !== "undefined" ? `${window.location.origin}/share/template/${todo.id}` : ""} 
+                                        className={styles.readOnlyInput}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        className={styles.copyBtn} 
+                                        onClick={handleCopyTemplateLink}
+                                    >
+                                        {templateCopied ? "복사됨" : "링크 복사"}
+                                    </button>
+                                </div>
+                            </div>
 
-                        {/* Removed Location Section */}
+                            {/* 대안 2: 일괄 복제 생성기 */}
+                            <div className={styles.shareOptionBox}>
+                                <div className={styles.optionTitle}>
+                                    <span className={styles.optionNumber}>대안 2</span>
+                                    <strong>개별 일괄 복제 링크 생성 (Batch Link)</strong>
+                                </div>
+                                <p className={styles.optionDesc}>
+                                    💡 <strong>사용 방법:</strong> 아래에 수신자들의 이름을 쉼표(,)로 구분해 입력 후 생성하세요. 
+                                    동일한 내용의 할 일이 담당자 인원만큼 복제 생성되어, 각각 전달할 수 있는 전용 완료 링크를 리스트업해 줍니다.
+                                </p>
+                                
+                                <div className={styles.batchInputGroup}>
+                                    <input 
+                                        type="text" 
+                                        placeholder="이름 목록 (예: 홍길동, 김철수, 이영희)" 
+                                        value={batchNicknames} 
+                                        onChange={(e) => setBatchNicknames(e.target.value)}
+                                        className={styles.textInput}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        className={styles.generateBtn} 
+                                        onClick={handleGenerateBatch}
+                                        disabled={!batchNicknames.trim() || isGeneratingBatch}
+                                    >
+                                        {isGeneratingBatch ? "생성 중..." : "일괄 생성"}
+                                    </button>
+                                </div>
 
+                                {/* Generated Links list */}
+                                {generatedBatchLinks.length > 0 && (
+                                    <div className={styles.generatedList}>
+                                        <div className={styles.generatedHeader}>
+                                            <span>생성된 개별 링크 ({generatedBatchLinks.length}건)</span>
+                                            <button 
+                                                type="button" 
+                                                className={styles.copyAllBtn} 
+                                                onClick={handleCopyAllBatchLinks}
+                                            >
+                                                {allBatchCopied ? "전체 복사 완료!" : "전체 링크 복사"}
+                                            </button>
+                                        </div>
+                                        <div className={styles.linkListContainer}>
+                                            {generatedBatchLinks.map((linkObj, idx) => (
+                                                <div key={idx} className={styles.linkListItem}>
+                                                    <span className={styles.linkAssignee}>{linkObj.name}</span>
+                                                    <input 
+                                                        type="text" 
+                                                        readOnly 
+                                                        value={linkObj.url} 
+                                                        className={styles.linkListUrl}
+                                                    />
+                                                    <button 
+                                                        type="button" 
+                                                        className={styles.linkListCopyBtn} 
+                                                        onClick={() => handleCopySingleLink(linkObj.url, idx)}
+                                                    >
+                                                        {copiedIndex === idx ? "복사됨" : "복사"}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className={styles.actions}>
@@ -231,7 +428,6 @@ export default function ShareModal({ todo, onClose }: ShareModalProps) {
                     </div>
                 </motion.div>
             </motion.div>
-
         </AnimatePresence>
     );
 }

@@ -30,6 +30,7 @@ export interface Todo {
     // Metadata
     syncId?: string;
     userId?: string;
+    parentTemplateId?: string;
     createdAt: Date;
     updatedAt: Date;
     completedAt?: Date;

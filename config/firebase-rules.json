@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "todos": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "assigned_to": {
+        ".validate": "newData.isString()"
+      },
+      "tracking_status": {
+        ".validate": "newData.val() == 'pending' || newData.val() == 'accepted' || newData.val() == 'completed'"
+      }
+    }
+  }
+}
