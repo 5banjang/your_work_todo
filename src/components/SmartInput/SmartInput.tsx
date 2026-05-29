@@ -73,7 +73,6 @@ export default function SmartInput() {
                     placeholder={isPersonal ? "나만 보는 할 일 등록..." : t("input.placeholder")}
                     className={styles.input}
                     id="smart-input"
-                    style={{ paddingRight: "80px" }}
                 />
                 
                 {/* Personal lock toggle btn */}
@@ -81,10 +80,6 @@ export default function SmartInput() {
                     type="button"
                     onClick={() => setIsPersonal(prev => !prev)}
                     style={{
-                        position: "absolute",
-                        right: "52px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
                         background: isPersonal ? "rgba(0, 245, 255, 0.15)" : "transparent",
                         color: isPersonal ? "var(--color-accent-cyan, #00f5ff)" : "var(--color-text-muted, #64748b)",
                         border: isPersonal ? "1px solid rgba(0, 245, 255, 0.3)" : "1px solid transparent",
@@ -95,7 +90,9 @@ export default function SmartInput() {
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
-                        transition: "all 0.2s ease"
+                        transition: "all 0.2s ease",
+                        flexShrink: 0,
+                        marginRight: "4px"
                     }}
                     title={isPersonal ? "비공개 (나만 보기)" : "기본 공유 모드"}
                 >
